@@ -66,7 +66,7 @@ export default class DatePicker extends Component {
 		};
 
 		this.weekEnds = this.getWeekEnds(props.weekEnds);
-		this.isPopUp = !!props.isPopUp;
+		this.isPopUp = typeof props.isPopUp === 'undefined' ? true : !!props.isPopUp;
 		this.isRangePicker = !!props.isRangePicker;
 		this.showDatePickerDetails = !!props.showDatePickerDetails;
 		this.showTitleDropDown = !!props.showTitleDropDown;
@@ -87,7 +87,7 @@ export default class DatePicker extends Component {
 			props.monthTitleDateFormat : this.constants.TITLE_DATE_FORMAT;
 		this.containerClassName = typeof props.containerClassName === 'string' ? props.containerClassName :
 			this.constants.CLASS_NAMES.DATE_PICKER_CONTAINER;
-		this.numberOfShownMonths = typeof props.numberOfShownMonths !== 'number' ? 2 :
+		this.numberOfShownMonths = typeof props.numberOfShownMonths !== 'number' ? 1 :
 			Math.max(Math.round(props.numberOfShownMonths), 1);
 		this.monthShift = typeof props.monthShift !== 'number' ? 1 :
 			Math.min(Math.max(Math.round(props.monthShift), 1), this.numberOfShownMonths);
@@ -117,6 +117,7 @@ export default class DatePicker extends Component {
 			date: this.toBeginningOfDay(obj.date)
 		})) : [];
 		this.selectCallbackFN = typeof props.selectCallbackFN !== 'function' ? null : props.selectCallbackFN;
+		this.dayElement = typeof props.dayElement !== 'function' ? null : props.dayElement;
 
 		setTimeout(() => {
 			window.addEventListener('click', this.windowClickHandler);
@@ -176,6 +177,7 @@ export default class DatePicker extends Component {
 				dateRangeEnd: this.state.dateRangeEnd ? this.state.dateRangeEnd.toDateString() : this.state.dateRangeEnd,
 				initialDate: this.state.currentMonth ? this.state.currentMonth.toDateString() : this.state.currentMonth,	
 				selectCallbackFN: this.selectCallbackFN ? this.selectCallbackFN.toString() : null,
+				dayElement: this.dayElement ? this.dayElement.toString() : null
 			};
 			Object.keys(consoleObj).forEach(key => console.log(key + ':', consoleObj[key]));
 		}
@@ -446,7 +448,7 @@ export default class DatePicker extends Component {
 		});
 	};
 
-	createDays = (year, month, today, DayElement) => {
+	createDays = (year, month, today) => {
 		const days = [];
 		const firstDayInMonthPosition = (new Date(year, month, 1).getDay() + 6 - this.firstDayInWeekShift) % 7;
 		const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -506,16 +508,12 @@ export default class DatePicker extends Component {
 				onClick={() => this.dayClickHandler(itrationDate, itrationClassName1)}
 				onMouseEnter={() => this.dayEnterHandler(itrationDate, itrationClassName1)}
 				onMouseLeave={this.dayLeaveHandler}
-			>{dayDate < 1 ? '' : DayElement ? <DayElement date={itrationDate}/> : dayDate}</div>);
+			>{dayDate < 1 ? '' : dayElement ? dayElement(itrationDate) : dayDate}</div>);
 		}
 		return days;
 	};
 
 	createMonths = today => {
-		let DayElement = this.props.dayElement || null;
-		if (DayElement && !React.isValidElement(<DayElement />)) {
-			DayElement = null;
-		}
 		const classNames = this.constants.CLASS_NAMES;
 		const currentYear = this.state.currentMonth.getFullYear();
 		const currentMonth = this.state.currentMonth.getMonth();
@@ -551,7 +549,7 @@ export default class DatePicker extends Component {
 							>{day}</div>)}
 						</div>
 						<div className={classNames.DAYS_CONTAINER}>
-							{this.createDays(currentYear, currentMonth + i, today, DayElement)}
+							{this.createDays(currentYear, currentMonth + i, today)}
 						</div>
 					</div>
 				);
@@ -642,7 +640,8 @@ DatePicker.propTypes = {
 	initialDate: PropTypes.instanceOf(Date),
 	previousMonthsInMonthsList: PropTypes.number,
 	nextMonthsInMonthsList: PropTypes.number,
-	selectCallbackFN: PropTypes.func.isRequired,
+	selectCallbackFN: PropTypes.func,
+	dayElement: PropTypes.func,
 	propsConsoleLog: PropTypes.bool,
 	weekEnds: PropTypes.arrayOf(PropTypes.number),
 	todayButton: PropTypes.oneOfType([

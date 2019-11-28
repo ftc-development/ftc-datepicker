@@ -338,7 +338,7 @@ function (_Component) {
       });
     });
 
-    _defineProperty(_assertThisInitialized(_this), "createDays", function (year, month, today, DayElement) {
+    _defineProperty(_assertThisInitialized(_this), "createDays", function (year, month, today) {
       var days = [];
       var firstDayInMonthPosition = (new Date(year, month, 1).getDay() + 6 - _this.firstDayInWeekShift) % 7;
       var daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -380,9 +380,7 @@ function (_Component) {
             return _this.dayEnterHandler(itrationDate, itrationClassName1);
           },
           onMouseLeave: _this.dayLeaveHandler
-        }, dayDate < 1 ? '' : DayElement ? _react["default"].createElement(DayElement, {
-          date: itrationDate
-        }) : dayDate));
+        }, dayDate < 1 ? '' : dayElement ? dayElement(itrationDate) : dayDate));
       };
 
       for (var i = 0; i < firstDayInMonthPosition + daysInMonth; i++) {
@@ -393,12 +391,6 @@ function (_Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "createMonths", function (today) {
-      var DayElement = _this.props.dayElement || null;
-
-      if (DayElement && !_react["default"].isValidElement(_react["default"].createElement(DayElement, null))) {
-        DayElement = null;
-      }
-
       var classNames = _this.constants.CLASS_NAMES;
 
       var currentYear = _this.state.currentMonth.getFullYear();
@@ -443,7 +435,7 @@ function (_Component) {
             }, day);
           })), _react["default"].createElement("div", {
             className: classNames.DAYS_CONTAINER
-          }, _this.createDays(currentYear, currentMonth + i, today, DayElement))));
+          }, _this.createDays(currentYear, currentMonth + i, today))));
         }
       };
 
@@ -510,7 +502,7 @@ function (_Component) {
       }
     };
     _this.weekEnds = _this.getWeekEnds(props.weekEnds);
-    _this.isPopUp = !!props.isPopUp;
+    _this.isPopUp = typeof props.isPopUp === 'undefined' ? true : !!props.isPopUp;
     _this.isRangePicker = !!props.isRangePicker;
     _this.showDatePickerDetails = !!props.showDatePickerDetails;
     _this.showTitleDropDown = !!props.showTitleDropDown;
@@ -524,7 +516,7 @@ function (_Component) {
     _this.dateFormat = _this.isValidDateFormat(props.dateFormat) ? props.dateFormat : _this.constants.DATE_FORMAT;
     _this.monthTitleDateFormat = _this.isValidDateFormat(props.monthTitleDateFormat) ? props.monthTitleDateFormat : _this.constants.TITLE_DATE_FORMAT;
     _this.containerClassName = typeof props.containerClassName === 'string' ? props.containerClassName : _this.constants.CLASS_NAMES.DATE_PICKER_CONTAINER;
-    _this.numberOfShownMonths = typeof props.numberOfShownMonths !== 'number' ? 2 : Math.max(Math.round(props.numberOfShownMonths), 1);
+    _this.numberOfShownMonths = typeof props.numberOfShownMonths !== 'number' ? 1 : Math.max(Math.round(props.numberOfShownMonths), 1);
     _this.monthShift = typeof props.monthShift !== 'number' ? 1 : Math.min(Math.max(Math.round(props.monthShift), 1), _this.numberOfShownMonths);
     _this.dayNames = _this.isArrayOfStrings(props.dayNames, 7) ? props.dayNames.slice(0, 7) : _this.constants.DAY_NAMES;
     _this.dayNameLength = typeof props.dayNameLength !== 'number' ? 3 : Math.max(Math.round(props.dayNameLength), 1);
@@ -549,6 +541,7 @@ function (_Component) {
       };
     }) : [];
     _this.selectCallbackFN = typeof props.selectCallbackFN !== 'function' ? null : props.selectCallbackFN;
+    _this.dayElement = typeof props.dayElement !== 'function' ? null : props.dayElement;
     setTimeout(function () {
       window.addEventListener('click', _this.windowClickHandler);
     }, 100);
@@ -606,7 +599,8 @@ function (_Component) {
         dateRangeStart: _this.state.dateRangeStart ? _this.state.dateRangeStart.toDateString() : _this.state.dateRangeStart,
         dateRangeEnd: _this.state.dateRangeEnd ? _this.state.dateRangeEnd.toDateString() : _this.state.dateRangeEnd,
         initialDate: _this.state.currentMonth ? _this.state.currentMonth.toDateString() : _this.state.currentMonth,
-        selectCallbackFN: _this.selectCallbackFN ? _this.selectCallbackFN.toString() : null
+        selectCallbackFN: _this.selectCallbackFN ? _this.selectCallbackFN.toString() : null,
+        dayElement: _this.dayElement ? _this.dayElement.toString() : null
       };
       Object.keys(consoleObj).forEach(function (key) {
         return console.log(key + ':', consoleObj[key]);
@@ -704,7 +698,8 @@ DatePicker.propTypes = {
   initialDate: _propTypes["default"].instanceOf(Date),
   previousMonthsInMonthsList: _propTypes["default"].number,
   nextMonthsInMonthsList: _propTypes["default"].number,
-  selectCallbackFN: _propTypes["default"].func.isRequired,
+  selectCallbackFN: _propTypes["default"].func,
+  dayElement: _propTypes["default"].func,
   propsConsoleLog: _propTypes["default"].bool,
   weekEnds: _propTypes["default"].arrayOf(_propTypes["default"].number),
   todayButton: _propTypes["default"].oneOfType([_propTypes["default"].string, _propTypes["default"].bool]),

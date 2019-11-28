@@ -208,6 +208,7 @@
 	border: none;
 	cursor: pointer;
 	outline: none;
+	background-color: transparent;
 }
 .date-picker-container .date-picker .btn-previous, .date-picker-container .date-picker .btn-next {
 	top: 15px;
