@@ -216,19 +216,18 @@ function (_Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "createMonthList", function (date) {
-      var month = date.getMonth();
-      var year = date.getFullYear();
       var list = [];
+      var itrationDate = new Date(_this.firstMonthInMonthsList.getFullYear(), _this.firstMonthInMonthsList.getMonth(), 1);
 
-      for (var i = -_this.previousMonthsInMonthsList; i <= _this.nextMonthsInMonthsList; i++) {
-        var itrationDate = new Date(year, month + i, 1);
-
+      while (itrationDate - _this.firstMonthInMonthsList >= 0 && itrationDate - _this.lastMonthInMonthsList <= 0) {
         if ((!_this.firstMonth || itrationDate - _this.firstMonth >= 0) && (!_this.lastMonth || itrationDate - _this.lastMonth <= 0)) {
           list.push({
             date: itrationDate,
-            selected: i === 0
+            selected: itrationDate - date === 0
           });
         }
+
+        itrationDate = new Date(itrationDate.getFullYear(), itrationDate.getMonth() + 1, 1);
       }
 
       return list;
@@ -380,7 +379,7 @@ function (_Component) {
             return _this.dayEnterHandler(itrationDate, itrationClassName1);
           },
           onMouseLeave: _this.dayLeaveHandler
-        }, dayDate < 1 ? '' : dayElement ? dayElement(itrationDate) : dayDate));
+        }, dayDate < 1 ? '' : _this.dayElement ? _this.dayElement(itrationDate) : dayDate));
       };
 
       for (var i = 0; i < firstDayInMonthPosition + daysInMonth; i++) {
@@ -511,8 +510,9 @@ function (_Component) {
     _this.todayButton = typeof props.todayButton === 'string' && props.todayButton.length > 0 ? props.todayButton : !!props.todayButton;
     _this.clearButton = typeof props.clearButton === 'string' && props.clearButton.length > 0 ? props.clearButton : !!props.clearButton;
     _this.placeholder = typeof props.placeholder === 'string' ? props.placeholder : '';
-    _this.previousMonthsInMonthsList = typeof props.previousMonthsInMonthsList !== 'number' ? 12 : Math.min(Math.max(Math.round(props.previousMonthsInMonthsList), 0), 24);
-    _this.nextMonthsInMonthsList = typeof props.nextMonthsInMonthsList !== 'number' ? 12 : Math.min(Math.max(Math.round(props.nextMonthsInMonthsList), 0), 24);
+    var now = new Date();
+    _this.firstMonthInMonthsList = _this.isDate(props.firstMonthInMonthsList) ? _this.toBeginningOfMonth(props.firstMonthInMonthsList) : _this.toBeginningOfMonth(now);
+    _this.lastMonthInMonthsList = _this.isDate(props.lastMonthInMonthsList) && props.lastMonthInMonthsList - _this.firstMonthInMonthsList >= 0 ? _this.toBeginningOfMonth(props.lastMonthInMonthsList) : new Date(_this.firstMonthInMonthsList.getFullYear(), _this.firstMonthInMonthsList.getMonth() + 24, 1);
     _this.dateFormat = _this.isValidDateFormat(props.dateFormat) ? props.dateFormat : _this.constants.DATE_FORMAT;
     _this.monthTitleDateFormat = _this.isValidDateFormat(props.monthTitleDateFormat) ? props.monthTitleDateFormat : _this.constants.TITLE_DATE_FORMAT;
     _this.containerClassName = typeof props.containerClassName === 'string' ? props.containerClassName : _this.constants.CLASS_NAMES.DATE_PICKER_CONTAINER;
@@ -572,8 +572,8 @@ function (_Component) {
         todayButton: _this.todayButton,
         clearButton: _this.clearButton,
         placeholder: _this.placeholder,
-        previousMonthsInMonthsList: _this.previousMonthsInMonthsList,
-        nextMonthsInMonthsList: _this.nextMonthsInMonthsList,
+        firstMonthInMonthsList: _this.firstMonthInMonthsList.toDateString(),
+        lastMonthInMonthsList: _this.lastMonthInMonthsList.toDateString(),
         numberOfShownMonths: _this.numberOfShownMonths,
         monthShift: _this.monthShift,
         isPopUp: _this.isPopUp,
@@ -696,8 +696,8 @@ DatePicker.propTypes = {
   dateRangeStart: _propTypes["default"].instanceOf(Date),
   dateRangeEnd: _propTypes["default"].instanceOf(Date),
   initialDate: _propTypes["default"].instanceOf(Date),
-  previousMonthsInMonthsList: _propTypes["default"].number,
-  nextMonthsInMonthsList: _propTypes["default"].number,
+  firstMonthInMonthsList: _propTypes["default"].instanceOf(Date),
+  lastMonthInMonthsList: _propTypes["default"].instanceOf(Date),
   selectCallbackFN: _propTypes["default"].func,
   dayElement: _propTypes["default"].func,
   propsConsoleLog: _propTypes["default"].bool,

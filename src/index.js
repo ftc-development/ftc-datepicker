@@ -78,10 +78,14 @@ export default class DatePicker extends Component {
 		this.clearButton = typeof props.clearButton === 'string' && props.clearButton.length > 0 ?
 			props.clearButton : !!props.clearButton;
 		this.placeholder = typeof props.placeholder === 'string' ? props.placeholder : '';
-		this.previousMonthsInMonthsList = typeof props.previousMonthsInMonthsList !== 'number' ? 12 :
-			Math.min(Math.max(Math.round(props.previousMonthsInMonthsList), 0), 24);
-		this.nextMonthsInMonthsList = typeof props.nextMonthsInMonthsList !== 'number' ? 12 :
-			Math.min(Math.max(Math.round(props.nextMonthsInMonthsList), 0), 24);
+		const now = new Date();
+		this.firstMonthInMonthsList = this.isDate(props.firstMonthInMonthsList) ?
+			this.toBeginningOfMonth(props.firstMonthInMonthsList) : this.toBeginningOfMonth(now);
+		this.lastMonthInMonthsList = this.isDate(props.lastMonthInMonthsList) &&
+			props.lastMonthInMonthsList - this.firstMonthInMonthsList >= 0 ?
+			this.toBeginningOfMonth(props.lastMonthInMonthsList) : new Date(
+				this.firstMonthInMonthsList.getFullYear(), this.firstMonthInMonthsList.getMonth() + 24, 1
+			);
 		this.dateFormat = this.isValidDateFormat(props.dateFormat) ? props.dateFormat : this.constants.DATE_FORMAT;
 		this.monthTitleDateFormat = this.isValidDateFormat(props.monthTitleDateFormat) ?
 			props.monthTitleDateFormat : this.constants.TITLE_DATE_FORMAT;
@@ -153,8 +157,8 @@ export default class DatePicker extends Component {
 				todayButton: this.todayButton,
 				clearButton: this.clearButton,
 				placeholder: this.placeholder,
-				previousMonthsInMonthsList: this.previousMonthsInMonthsList,
-				nextMonthsInMonthsList: this.nextMonthsInMonthsList,
+				firstMonthInMonthsList: this.firstMonthInMonthsList.toDateString(),
+				lastMonthInMonthsList: this.lastMonthInMonthsList.toDateString(),
 				numberOfShownMonths: this.numberOfShownMonths,
 				monthShift: this.monthShift,
 				isPopUp: this.isPopUp,
@@ -327,20 +331,19 @@ export default class DatePicker extends Component {
 	};
 
 	createMonthList = date => {
-		const month = date.getMonth();
-		const year = date.getFullYear();
 		const list = [];
-		for (let i = - this.previousMonthsInMonthsList; i <= this.nextMonthsInMonthsList; i++) {
-			const itrationDate = new Date(year, month + i, 1);
+		let itrationDate = new Date(this.firstMonthInMonthsList.getFullYear(), this.firstMonthInMonthsList.getMonth(), 1);
+		while(itrationDate - this.firstMonthInMonthsList >= 0 && itrationDate - this.lastMonthInMonthsList <= 0) {
 			if (
 				(!this.firstMonth || itrationDate - this.firstMonth >= 0) &&
 				(!this.lastMonth || itrationDate - this.lastMonth <= 0)
 			) {
 				list.push({
 					date: itrationDate,
-					selected: i === 0
+					selected: itrationDate - date === 0
 				});
 			}
+			itrationDate = new Date(itrationDate.getFullYear(), itrationDate.getMonth() + 1, 1);
 		}
 		return list;
 	};
@@ -508,7 +511,7 @@ export default class DatePicker extends Component {
 				onClick={() => this.dayClickHandler(itrationDate, itrationClassName1)}
 				onMouseEnter={() => this.dayEnterHandler(itrationDate, itrationClassName1)}
 				onMouseLeave={this.dayLeaveHandler}
-			>{dayDate < 1 ? '' : dayElement ? dayElement(itrationDate) : dayDate}</div>);
+			>{dayDate < 1 ? '' : this.dayElement ? this.dayElement(itrationDate) : dayDate}</div>);
 		}
 		return days;
 	};
@@ -638,8 +641,8 @@ DatePicker.propTypes = {
 	dateRangeStart: PropTypes.instanceOf(Date),
 	dateRangeEnd: PropTypes.instanceOf(Date),
 	initialDate: PropTypes.instanceOf(Date),
-	previousMonthsInMonthsList: PropTypes.number,
-	nextMonthsInMonthsList: PropTypes.number,
+	firstMonthInMonthsList: PropTypes.instanceOf(Date),
+	lastMonthInMonthsList: PropTypes.instanceOf(Date),
 	selectCallbackFN: PropTypes.func,
 	dayElement: PropTypes.func,
 	propsConsoleLog: PropTypes.bool,
