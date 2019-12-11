@@ -100,7 +100,7 @@ class DatePicker extends Component {
 			today.getFullYear(), today.getMonth() + 24, 1
 		));
 		this.onSelect = null;
-		this.inputCleareButtonTemplate = null;
+		this.inputClearButtonTemplate = null;
 		this.previousButtonTemplate = null;
 		this.nextButtonTemplate = null;
 		this.monthTitleDropDownIconTemplate = null;
@@ -707,7 +707,7 @@ class DatePicker extends Component {
 					this[key] = this.isValidDateFormat(props[key]) ? props[key] : this[key];
 					break;
 				case 'onSelect':
-				case 'inputCleareButtonTemplate':
+				case 'inputClearButtonTemplate':
 				case 'previousButtonTemplate':
 				case 'nextButtonTemplate':
 				case 'monthTitleDropDownIconTemplate':
@@ -780,6 +780,9 @@ class DatePicker extends Component {
 		const selectedEnd = this.isRangePicker ? this.state.endDate :
 			this.selectedDaysInOneClick > 1 ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(),
 			selectedStart.getDate() + this.selectedDaysInOneClick - 1) : null;
+
+
+			console.log(this.inputClearButtonTemplate)
 		return <div className={classNames.DATE_PICKER_CONTAINER}>
 			{this.isPopUp ? <div
 				className={classNames.DATE_PICKER_INPUT} onClick={this.DatePickerToggle}
@@ -787,10 +790,10 @@ class DatePicker extends Component {
 				{!selectedStart ? this.inputPlaceholder : this.createDateString(
 					this.inputDateFormat, selectedStart, selectedEnd
 				)}
-				{this.inputCleareButtonTemplate && selectedStart ? <div
+				{this.inputClearButtonTemplate ? <div
 					className={classNames.INPUT_BUTTON}
 					onClick={this.inputCleareClickHandler}
-				>{this.inputCleareButtonTemplate({
+				>{this.inputClearButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
 					minDate: this.cloneDate(this.minDate),
@@ -866,7 +869,7 @@ DatePicker.propTypes = {
 			end: PropTypes.instanceOf(Date)
 		})
 	])),
-	inputCleareButtonTemplate: PropTypes.func,
+	inputClearButtonTemplate: PropTypes.func,
 	previousButtonTemplate: PropTypes.func,
 	nextButtonTemplate: PropTypes.func,
 	monthTitleDropDownIconTemplate: PropTypes.func,
