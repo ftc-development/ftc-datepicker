@@ -6,7 +6,7 @@
 	display: inline-block;
 	position: relative;
 }
-.date-picker-container .date-picker-title {
+.date-picker-container .date-picker-input {
 	cursor: pointer;
 	width: 250px;
 	height: 14px;
