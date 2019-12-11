@@ -8,6 +8,7 @@ class DatePicker extends Component {
 		super(props);
 
 		this.monthListSelectedItem = React.createRef();
+		this.monthListContainer = React.createRef();
 
 		// Set constants
 		this.CONSTANTS = {
@@ -26,6 +27,8 @@ class DatePicker extends Component {
 			CLASS_NAMES: {
 				DATE_PICKER_CONTAINER: 'date-picker-container',
 				DATE_PICKER_INPUT: 'date-picker-input',
+				DATE_PICKER_INPUT_EMPTY: 'date-picker-input-empty',
+				DATE_PICKER_INPUT_NOT_EMPTY: 'date-picker-input-not-empty',
 				INPUT_BUTTON: 'input-button',
 				DATE_PICKER: 'date-picker',
 				MONTHS_CONTAINER: 'months-container',
@@ -129,8 +132,8 @@ class DatePicker extends Component {
 	componentDidUpdate(prevProps, prevState) {
 
 		// Scroll to selected month in month's dropdown
-		if (prevState.monthList !== this.state.monthList && this.monthListSelectedItem.current) {
-			this.monthListSelectedItem.current.scrollIntoView();
+		if (prevState.monthList !== this.state.monthList && this.monthListContainer.current && this.monthListSelectedItem.current) {
+			this.monthListContainer.current.scrollTop = this.monthListSelectedItem.current.offsetTop;
 		}
 
 		// Update state
@@ -406,7 +409,7 @@ class DatePicker extends Component {
 		}
 	};
 
-	inputCleareClickHandler = e => {
+	inputClearClickHandler = e => {
 		if (this.state.startDate) {
 			e.stopPropagation();
 			this.setState({
@@ -416,7 +419,13 @@ class DatePicker extends Component {
 				monthList: null
 			});
 			if (this.onSelect) {
-				this.onSelect(null, null);
+				this.onSelect({
+					startDate: null,
+					endDate: null,
+					minDate: this.cloneDate(this.minDate),
+					maxDate: this.cloneDate(this.maxDate),
+					shownMonth: this.cloneDate(this.state.shownMonth)
+				});
 			}
 		}
 	};
@@ -629,7 +638,10 @@ class DatePicker extends Component {
 									open: this.state.monthList === i
 								})}
 							</div>
-							{this.state.monthList !== i ? null : <ul className={classNames.MONTH_LIST}>
+							{this.state.monthList !== i ? null : <ul
+								className={classNames.MONTH_LIST}
+								ref={this.monthListContainer}
+							>
 								{this.createMonthList(monthDate).map((item, index) => <li
 									key={index}
 									className={classNames.MONTH_LIST_ITEM + (item.selected ? ' ' +
@@ -712,7 +724,7 @@ class DatePicker extends Component {
 				case 'nextButtonTemplate':
 				case 'monthTitleDropDownIconTemplate':
 				case 'dayTileTemplate':
-					this[key] = typeof props[key] !== 'function' ? this[key] : null;
+					this[key] = typeof props[key] === 'function' ? props[key] : this[key];
 					break;
 				case 'isPopUp':
 				case 'showFooter':
@@ -781,25 +793,26 @@ class DatePicker extends Component {
 			this.selectedDaysInOneClick > 1 ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(),
 			selectedStart.getDate() + this.selectedDaysInOneClick - 1) : null;
 
-
-			console.log(this.inputClearButtonTemplate)
 		return <div className={classNames.DATE_PICKER_CONTAINER}>
 			{this.isPopUp ? <div
-				className={classNames.DATE_PICKER_INPUT} onClick={this.DatePickerToggle}
+				className={classNames.DATE_PICKER_INPUT + ' ' + (
+					this.state.startDate ? classNames.DATE_PICKER_INPUT_NOT_EMPTY : classNames.DATE_PICKER_INPUT_EMPTY
+				)}
+				onClick={this.DatePickerToggle}
 			>
 				{!selectedStart ? this.inputPlaceholder : this.createDateString(
 					this.inputDateFormat, selectedStart, selectedEnd
 				)}
-				{this.inputClearButtonTemplate ? <div
+				{this.inputClearButtonTemplate ? <span
 					className={classNames.INPUT_BUTTON}
-					onClick={this.inputCleareClickHandler}
+					onClick={this.inputClearClickHandler}
 				>{this.inputClearButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
 					minDate: this.cloneDate(this.minDate),
 					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
-				})}</div> : null}
+				})}</span> : null}
 			</div> : null}
 			{!this.isPopUp || this.state.isVisible ? <div
 				className={classNames.DATE_PICKER}
