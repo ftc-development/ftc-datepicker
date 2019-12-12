@@ -18,6 +18,7 @@ class DatePicker extends Component {
 				'October', 'November', 'December'
 			],
 			INPUT_PLACEHOLDER: 'Click here to select date',
+			INPUT_LABEL: 'Click here to select date',
 			INPUT_DATE_FORMAT: 'ddd, mmm dd yyyy',
 			HEADER_DATE_FORMAT: 'mmmm yyyy',
 			FOOTER_DATE_FORMAT: 'dd/mm/yyyy',
@@ -29,6 +30,8 @@ class DatePicker extends Component {
 				DATE_PICKER_INPUT: 'date-picker-input',
 				DATE_PICKER_INPUT_EMPTY: 'date-picker-input-empty',
 				DATE_PICKER_INPUT_NOT_EMPTY: 'date-picker-input-not-empty',
+				DATE_PICKER_INPUT_LABEL: 'date-picker-input-label',
+				DATE_PICKER_INPUT_PLACEHOLDER: 'date-picker-input-placeholder',
 				INPUT_BUTTON: 'input-button',
 				DATE_PICKER: 'date-picker',
 				MONTHS_CONTAINER: 'months-container',
@@ -85,11 +88,13 @@ class DatePicker extends Component {
 		this.isRangePicker = false;
 		this.showFooter = false;
 		this.showTitleDropDown = false;
+		this.showInputLabel = false;
 		this.monthsInDatePicker = 1;
 		this.monthStep = 1;
 		this.selectedDaysInOneClick = 1;
 		this.selectedMSsInOneClick = this.selectedDaysInOneClick * 86400000;
 		this.inputPlaceholder = this.CONSTANTS.INPUT_PLACEHOLDER;
+		this.inputLabel = this.CONSTANTS.INPUT_LABEL;
 		this.inputDateFormat = this.CONSTANTS.INPUT_DATE_FORMAT;
 		this.headerDateFormat = this.CONSTANTS.HEADER_DATE_FORMAT;
 		this.footerDateFormat = this.CONSTANTS.FOOTER_DATE_FORMAT;
@@ -576,7 +581,7 @@ class DatePicker extends Component {
 			const itrationClassName3 = dayDate > 0 && itrationDate - today === 0 ? classNames.TODAY : null;
 			const itrationClassName4 = dayDate < 1 ? null : this.state.startDate &&
 				startDateToItrationDate === 0 ? (this.isRangePicker ? (this.state.endDate ?
-				classNames.RANGE_START : classNames.RANGE_START_END) : (this.numberOfSelectedDays === 1 ?
+				classNames.RANGE_START : classNames.RANGE_START_END) : (this.selectedDaysInOneClick === 1 ?
 				classNames.SELECTION_START_END : classNames.SELECTION_START)) : this.state.endDate &&
 				endDateToItrationDate === 0 ? classNames.RANGE_END : this.state.endDate &&
 				startDateToItrationDate > 0 && endDateToItrationDate < 0 ? classNames.IN_RANGE :
@@ -605,7 +610,7 @@ class DatePicker extends Component {
 				maxDate: this.cloneDate(this.maxDate),
 				shownMonth: this.cloneDate(this.state.shownMonth),
 				currentDate: this.cloneDate(itrationDate)
-			}) : dayDate}</div>);
+			}) : ('0' + dayDate).slice(-2)}</div>);
 		}
 		return days;
 	};
@@ -677,6 +682,7 @@ class DatePicker extends Component {
 		Object.keys(this.props).forEach(key => {
 			switch (key) {
 				case 'inputPlaceholder':
+				case 'inputLabel':
 					this[key] = typeof props[key] === 'string' ? props[key] : this[key];
 					break;
 				case 'weekEnds':
@@ -729,6 +735,7 @@ class DatePicker extends Component {
 				case 'isPopUp':
 				case 'showFooter':
 				case 'showTitleDropDown':
+				case 'showInputLabel':
 					this[key] = !!props[key];
 					break;
 				case 'isRangePicker':
@@ -800,10 +807,11 @@ class DatePicker extends Component {
 				)}
 				onClick={this.DatePickerToggle}
 			>
-				{!selectedStart ? this.inputPlaceholder : this.createDateString(
+				{this.showInputLabel ? <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div> : null}
+				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>{!selectedStart ? this.inputPlaceholder : this.createDateString(
 					this.inputDateFormat, selectedStart, selectedEnd
-				)}
-				{this.inputClearButtonTemplate ? <span
+				)}</div>
+				{this.inputClearButtonTemplate ? <div
 					className={classNames.INPUT_BUTTON}
 					onClick={this.inputClearClickHandler}
 				>{this.inputClearButtonTemplate({
@@ -812,7 +820,7 @@ class DatePicker extends Component {
 					minDate: this.cloneDate(this.minDate),
 					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
-				})}</span> : null}
+				})}</div> : null}
 			</div> : null}
 			{!this.isPopUp || this.state.isVisible ? <div
 				className={classNames.DATE_PICKER}
@@ -856,6 +864,7 @@ DatePicker.propTypes = {
 	isRangePicker: PropTypes.bool,
 	showFooter: PropTypes.bool,
 	showTitleDropDown: PropTypes.bool,
+	showInputLabel: PropTypes.bool,
 	monthsInDatePicker: PropTypes.number,
 	monthStep: PropTypes.number,
 	selectedDaysInOneClick: PropTypes.number,
@@ -866,6 +875,7 @@ DatePicker.propTypes = {
 	headerDateFormat: PropTypes.string,
 	footerDateFormat: PropTypes.string,
 	inputPlaceholder: PropTypes.string,
+	inputLabel: PropTypes.string,
 	dayNames: PropTypes.arrayOf(PropTypes.string),
 	monthNames: PropTypes.arrayOf(PropTypes.string),
 	minDate: PropTypes.instanceOf(Date),
