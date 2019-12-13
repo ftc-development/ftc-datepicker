@@ -414,8 +414,6 @@ class DatePicker extends Component {
 			this.onSelect({
 				startDate: this.cloneDate(start),
 				endDate: this.cloneDate(end),
-				minDate: this.cloneDate(this.minDate),
-				maxDate: this.cloneDate(this.maxDate),
 				shownMonth: this.cloneDate(this.state.shownMonth)
 			});
 		}
@@ -434,8 +432,6 @@ class DatePicker extends Component {
 				this.onSelect({
 					startDate: null,
 					endDate: null,
-					minDate: this.cloneDate(this.minDate),
-					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				});
 			}
@@ -613,8 +609,6 @@ class DatePicker extends Component {
 			>{dayDate < 1 ? '' : this.dayTileTemplate ? this.dayTileTemplate({
 				startDate: this.cloneDate(this.state.startDate),
 				endDate: this.cloneDate(this.state.endDate),
-				minDate: this.cloneDate(this.minDate),
-				maxDate: this.cloneDate(this.maxDate),
 				shownMonth: this.cloneDate(this.state.shownMonth),
 				currentDate: this.cloneDate(itrationDate)
 			}) : ('0' + dayDate).slice(-2)}</div>);
@@ -644,8 +638,6 @@ class DatePicker extends Component {
 								{!this.monthTitleDropDownIconTemplate ? null : this.monthTitleDropDownIconTemplate({
 									startDate: this.cloneDate(this.state.startDate),
 									endDate: this.cloneDate(this.state.endDate),
-									minDate: this.cloneDate(this.minDate),
-									maxDate: this.cloneDate(this.maxDate),
 									shownMonth: this.cloneDate(this.state.shownMonth),
 									open: this.state.monthList === i
 								})}
@@ -824,8 +816,6 @@ class DatePicker extends Component {
 				>{this.inputClearButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
-					minDate: this.cloneDate(this.minDate),
-					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div> : null}
 			</div> : null}
@@ -847,8 +837,6 @@ class DatePicker extends Component {
 				>{!this.previousButtonTemplate ? 'Previous' : this.previousButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
-					minDate: this.cloneDate(this.minDate),
-					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div>
 				<div
@@ -857,8 +845,6 @@ class DatePicker extends Component {
 				>{!this.nextButtonTemplate ? 'Next' : this.nextButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
-					minDate: this.cloneDate(this.minDate),
-					maxDate: this.cloneDate(this.maxDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div>
 			</div> : null}
