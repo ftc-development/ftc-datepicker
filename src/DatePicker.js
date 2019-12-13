@@ -128,6 +128,9 @@ class DatePicker extends Component {
 
 	componentDidMount() {
 		window.addEventListener('click', this.windowClickHandler);
+
+		// Update state
+		this.updateState({});
 	}
 
 	componentWillUnmount() {
@@ -142,6 +145,10 @@ class DatePicker extends Component {
 		}
 
 		// Update state
+		this.updateState(prevProps);
+	}
+
+	updateState = prevProps => {
 		const props = this.props;
 		let startDate = this.state.startDate;
 		let endDate = this.state.endDate;
@@ -197,7 +204,7 @@ class DatePicker extends Component {
 				shownMonth: shownMonth
 			});
 		}
-	}
+	};
 
 	windowClickHandler = () => {
 		this.setState({
