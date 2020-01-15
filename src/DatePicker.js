@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import './DatePicker.css';
+// import './DatePicker.css';
 class DatePicker extends Component {
 	constructor(props) {
 		super(props);
