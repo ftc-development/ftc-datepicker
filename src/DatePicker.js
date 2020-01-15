@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // import './DatePicker.css';
-
 class DatePicker extends Component {
 	constructor(props) {
 		super(props);
@@ -26,6 +25,7 @@ class DatePicker extends Component {
 			NEXT_TO_BLACK_LIST: 'nextToBlackList',
 			NOT_IN_BLACK_LIST: 'notInBlackList',
 			CLASS_NAMES: {
+				DATE_PICKER_BACKDROP: 'date-picker-backdrop',
 				DATE_PICKER_CONTAINER: 'date-picker-container',
 				DATE_PICKER_INPUT: 'date-picker-input',
 				DATE_PICKER_INPUT_EMPTY: 'date-picker-input-empty',
@@ -127,14 +127,8 @@ class DatePicker extends Component {
 	}
 
 	componentDidMount() {
-		window.addEventListener('click', this.windowClickHandler);
-
 		// Update state
 		this.updateState({});
-	}
-
-	componentWillUnmount() {
-		window.removeEventListener('click', this.windowClickHandler);
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -555,6 +549,18 @@ class DatePicker extends Component {
 		}
 	};
 
+	getHighestZIndex = () => {
+		let highestZIndex = 0;
+		const elements = document.getElementsByTagName('*');
+		for (let i = 0; i < elements.length; i++) {
+			var zIndex = document.defaultView.getComputedStyle(elements[i],null).getPropertyValue("z-index");
+			if (zIndex != 'auto' && zIndex > highestZIndex) {
+				highestZIndex = zIndex;
+			}
+		}
+		return  parseInt(highestZIndex);
+	}
+
 	createDays = (year, month, today) => {
 		const days = [];
 		const firstDayInMonthPosition = (new Date(
@@ -799,6 +805,8 @@ class DatePicker extends Component {
 			this.selectedDaysInOneClick > 1 ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(),
 			selectedStart.getDate() + this.selectedDaysInOneClick - 1) : null;
 
+		const highestZIndex = this.getHighestZIndex();
+
 		return <div className={classNames.DATE_PICKER_CONTAINER}>
 			{this.isPopUp ? <div
 				className={classNames.DATE_PICKER_INPUT + ' ' + (
@@ -819,9 +827,15 @@ class DatePicker extends Component {
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div> : null}
 			</div> : null}
+			{this.isPopUp && this.state.isVisible && <div
+				className={classNames.DATE_PICKER_BACKDROP}
+				style={{zIndex: highestZIndex + 1, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0}}
+				onClick={this.windowClickHandler}
+			></div>}
 			{!this.isPopUp || this.state.isVisible ? <div
 				className={classNames.DATE_PICKER}
 				onClick={this.datePickerClickHandler}
+				style={this.isPopUp ? {zIndex: highestZIndex + 2} : {}}
 			>
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
