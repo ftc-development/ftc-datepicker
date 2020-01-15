@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-// import './DatePicker.css';
+import './DatePicker.css';
 class DatePicker extends Component {
 	constructor(props) {
 		super(props);
@@ -549,17 +549,17 @@ class DatePicker extends Component {
 		}
 	};
 
-	getHighestZIndex = () => {
-		let highestZIndex = 0;
-		const elements = document.getElementsByTagName('*');
-		for (let i = 0; i < elements.length; i++) {
-			var zIndex = document.defaultView.getComputedStyle(elements[i],null).getPropertyValue("z-index");
-			if (zIndex != 'auto' && zIndex > highestZIndex) {
-				highestZIndex = zIndex;
-			}
-		}
-		return  parseInt(highestZIndex);
-	}
+	// getHighestZIndex = () => {
+	// 	let highestZIndex = 0;
+	// 	const elements = document.getElementsByTagName('*');
+	// 	for (let i = 0; i < elements.length; i++) {
+	// 		var zIndex = document.defaultView.getComputedStyle(elements[i],null).getPropertyValue("z-index");
+	// 		if (zIndex != 'auto' && zIndex > highestZIndex) {
+	// 			highestZIndex = zIndex;
+	// 		}
+	// 	}
+	// 	return  parseInt(highestZIndex);
+	// }
 
 	createDays = (year, month, today) => {
 		const days = [];
@@ -805,7 +805,7 @@ class DatePicker extends Component {
 			this.selectedDaysInOneClick > 1 ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(),
 			selectedStart.getDate() + this.selectedDaysInOneClick - 1) : null;
 
-		const highestZIndex = this.getHighestZIndex();
+		// const highestZIndex = this.getHighestZIndex();
 
 		return <div className={classNames.DATE_PICKER_CONTAINER}>
 			{this.isPopUp ? <div
@@ -829,13 +829,13 @@ class DatePicker extends Component {
 			</div> : null}
 			{this.isPopUp && this.state.isVisible && <div
 				className={classNames.DATE_PICKER_BACKDROP}
-				style={{zIndex: highestZIndex + 1, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0}}
+				style={{zIndex: 16777270, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0}}
 				onClick={this.windowClickHandler}
 			></div>}
 			{!this.isPopUp || this.state.isVisible ? <div
 				className={classNames.DATE_PICKER}
 				onClick={this.datePickerClickHandler}
-				style={this.isPopUp ? {zIndex: highestZIndex + 2} : {}}
+				style={this.isPopUp ? {zIndex: 16777271} : {}}
 			>
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
