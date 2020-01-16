@@ -200,13 +200,6 @@ class DatePicker extends Component {
 		}
 	};
 
-	windowClickHandler = () => {
-		this.setState({
-			isVisible: this.isPopUp ? false : true,
-			monthList: null
-		});
-	};
-
 	valuesAreNotTheSame = (val1, val2) => {
 		if (typeof val1 !== typeof val2) {
 			return true;
@@ -389,8 +382,7 @@ class DatePicker extends Component {
 		return shownMonth;
 	};
 
-	DatePickerToggle = e => {
-		e.stopPropagation();
+	datePickerToggle = e => {
 		this.setState({
 			isVisible: !this.state.isVisible,
 			monthList: null
@@ -641,14 +633,14 @@ class DatePicker extends Component {
 								onClick={e => this.monthTitleClickHandler(e, i)}
 							>
 								{this.dateToString(monthDate, this.headerDateFormat)}
-								{!this.monthTitleDropDownIconTemplate ? null : this.monthTitleDropDownIconTemplate({
+								{this.monthTitleDropDownIconTemplate && this.monthTitleDropDownIconTemplate({
 									startDate: this.cloneDate(this.state.startDate),
 									endDate: this.cloneDate(this.state.endDate),
 									shownMonth: this.cloneDate(this.state.shownMonth),
 									open: this.state.monthList === i
 								})}
 							</div>
-							{this.state.monthList !== i ? null : <ul
+							{this.state.monthList === i && <ul
 								className={classNames.MONTH_LIST}
 								ref={this.monthListContainer}
 							>
@@ -808,31 +800,31 @@ class DatePicker extends Component {
 		// const highestZIndex = this.getHighestZIndex();
 
 		return <div className={classNames.DATE_PICKER_CONTAINER}>
-			{this.isPopUp ? <div
+			{this.isPopUp && <div
 				className={classNames.DATE_PICKER_INPUT + ' ' + (
 					this.state.startDate ? classNames.DATE_PICKER_INPUT_NOT_EMPTY : classNames.DATE_PICKER_INPUT_EMPTY
 				)}
-				onClick={this.DatePickerToggle}
+				onClick={this.datePickerToggle}
 			>
-				{this.showInputLabel ? <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div> : null}
+				{this.showInputLabel && <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div>}
 				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>{!selectedStart ? this.inputPlaceholder : this.createDateString(
 					this.inputDateFormat, selectedStart, selectedEnd
 				)}</div>
-				{this.inputClearButtonTemplate ? <div
+				{this.inputClearButtonTemplate && <div
 					className={classNames.INPUT_BUTTON}
 					onClick={this.inputClearClickHandler}
 				>{this.inputClearButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
-				})}</div> : null}
-			</div> : null}
+				})}</div>}
+			</div>}
 			{this.isPopUp && this.state.isVisible && <div
 				className={classNames.DATE_PICKER_BACKDROP}
 				style={{zIndex: 16777270, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0}}
-				onClick={this.windowClickHandler}
+				onClick={this.datePickerToggle}
 			></div>}
-			{!this.isPopUp || this.state.isVisible ? <div
+			{(!this.isPopUp || this.state.isVisible) && <div
 				className={classNames.DATE_PICKER}
 				onClick={this.datePickerClickHandler}
 				style={this.isPopUp ? {zIndex: 16777271} : {}}
@@ -840,7 +832,7 @@ class DatePicker extends Component {
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
 				</div>
-				{!this.showFooter ? null : <div className={classNames.DATE_PICKER_FOOTER}>
+				{this.showFooter && <div className={classNames.DATE_PICKER_FOOTER}>
 					{!selectedStart ? '' : this.createDateString(
 						this.footerDateFormat, selectedStart, selectedEnd
 					)}
@@ -861,7 +853,7 @@ class DatePicker extends Component {
 					endDate: this.cloneDate(this.state.endDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div>
-			</div> : null}
+			</div>}
 		</div>;
 	}
 }
