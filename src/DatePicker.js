@@ -8,6 +8,8 @@ class DatePicker extends Component {
 
 		this.monthListSelectedItem = React.createRef();
 		this.monthListContainer = React.createRef();
+		this.datePickerPopUp = React.createRef();
+		this.datePickerButton = React.createRef();
 
 		// Set constants
 		this.CONSTANTS = {
@@ -25,7 +27,6 @@ class DatePicker extends Component {
 			NEXT_TO_BLACK_LIST: 'nextToBlackList',
 			NOT_IN_BLACK_LIST: 'notInBlackList',
 			CLASS_NAMES: {
-				DATE_PICKER_BACKDROP: 'date-picker-backdrop',
 				DATE_PICKER_CONTAINER: 'date-picker-container',
 				DATE_PICKER_INPUT: 'date-picker-input',
 				DATE_PICKER_INPUT_EMPTY: 'date-picker-input-empty',
@@ -127,8 +128,14 @@ class DatePicker extends Component {
 	}
 
 	componentDidMount() {
+		document.addEventListener('mousedown', this.documentClickHandler);
+
 		// Update state
 		this.updateState({});
+	}
+
+	componentWillMount() {
+		document.removeEventListener('mousedown', this.documentClickHandler);
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -141,6 +148,20 @@ class DatePicker extends Component {
 		// Update state
 		this.updateState(prevProps);
 	}
+
+	documentClickHandler = e => {
+		if (
+			!this.isPopUp || !this.state.isVisible ||
+			this.datePickerPopUp.current && this.datePickerPopUp.current.contains(e.target) ||
+			this.datePickerButton.current && this.datePickerButton.current.contains(e.target)
+		) {
+			return;
+		}
+		this.setState({
+			isVisible: false,
+			monthList: null
+		});
+	};
 
 	updateState = prevProps => {
 		const props = this.props;
@@ -425,7 +446,6 @@ class DatePicker extends Component {
 	};
 
 	datePickerClickHandler = e => {
-		e.stopPropagation();
 		this.setState({
 			monthList: null
 		});
@@ -805,6 +825,7 @@ class DatePicker extends Component {
 					this.state.startDate ? classNames.DATE_PICKER_INPUT_NOT_EMPTY : classNames.DATE_PICKER_INPUT_EMPTY
 				)}
 				onClick={this.datePickerToggle}
+				ref={this.datePickerButton}
 			>
 				{this.showInputLabel && <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div>}
 				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>{!selectedStart ? this.inputPlaceholder : this.createDateString(
@@ -819,15 +840,11 @@ class DatePicker extends Component {
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div>}
 			</div>}
-			{this.isPopUp && this.state.isVisible && <div
-				className={classNames.DATE_PICKER_BACKDROP}
-				style={{zIndex: 16777270, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0}}
-				onClick={this.datePickerToggle}
-			></div>}
 			{(!this.isPopUp || this.state.isVisible) && <div
 				className={classNames.DATE_PICKER}
 				onClick={this.datePickerClickHandler}
 				style={this.isPopUp ? {zIndex: 16777271} : {}}
+				ref={this.datePickerPopUp}
 			>
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
