@@ -134,7 +134,7 @@ class DatePicker extends Component {
 		this.updateState({});
 	}
 
-	componentWillMount() {
+	componentWillUnmount() {
 		document.removeEventListener('mousedown', this.documentClickHandler);
 	}
 
