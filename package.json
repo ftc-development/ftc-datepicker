@@ -8,6 +8,15 @@
     "start": "webpack-dev-server",
     "build": "webpack --mode production"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ftc-development/ftc-datepicker.git"
+  },
+  "keywords": [
+    "datepicker",
+    "date",
+    "picker"
+  ],
   "author": "Yaser Somaf",
   "license": "ISC",
   "devDependencies": {
