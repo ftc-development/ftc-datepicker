@@ -20,8 +20,8 @@ class DatePicker extends Component {
 			],
 			INPUT_PLACEHOLDER: 'Click here to select date',
 			INPUT_LABEL: 'Click here to select date',
-			INPUT_DATE_FORMAT: 'ddd, mmm dd yyyy',
-			HEADER_DATE_FORMAT: 'mmmm yyyy',
+			INPUT_DATE_FORMAT: 'DDD, MMM dd yyyy',
+			HEADER_DATE_FORMAT: 'MMMM yyyy',
 			FOOTER_DATE_FORMAT: 'dd/mm/yyyy',
 			IN_BLACK_LIST: 'inBlackList',
 			NEXT_TO_BLACK_LIST: 'nextToBlackList',
@@ -279,11 +279,14 @@ class DatePicker extends Component {
 	};
 
 	isValidDateFormat = format => {
+		if (format && Object.prototype.toString.call(format) == '[object Function]') {
+			return true;
+		}
 		if (typeof format !== 'string') {
 			return false;
 		}
 		const length = format.length;
-		format = format.replace(/yyyy|yy|mmmm|mmm|mm|m|dddd|ddd|dd|d/gmi, '');
+		format = format.replace(/yyyy|yy|MMMM|MMM|MM|M|mm|m|DDDD|DDD|DD|D|dd|d/gm, '');
 		if (length === format.length || /[a-z]|\d/mi.test(format)) {
 			return false;
 		}
@@ -291,29 +294,40 @@ class DatePicker extends Component {
 	};
 
 	dateToString = (date, format) => {
+		if (format && Object.prototype.toString.call(format) == '[object Function]') {
+			return format(date);
+		}
 		const dateYear = date.getFullYear();
 		const dateMonth = date.getMonth();
 		const dateDate = date.getDate();
 		const dateDay = (date.getDay() + 6) % 7;
-		return format.replace(/yyyy|yy|mmmm|mmm|mm|m|dddd|ddd|dd|d/gmi, match => {
+		return format.replace(/yyyy|yy|MMMM|MMM|MM|M|mm|m|DDDD|DDD|DD|D|dd|d/gm, match => {
 			match = match.toLowerCase();
 			switch (match) {
 				case 'yyyy':
 					return dateYear + '';
 				case 'yy':
 					return (dateYear + '').slice(-2);
-				case 'mmmm':
+				case 'MMMM':
 					return this.monthNames[dateMonth];
-				case 'mmm':
+				case 'MMM':
 					return this.monthNames[dateMonth].slice(0, 3);
+				case 'MM':
+					return this.monthNames[dateMonth].slice(0, 2);
+				case 'M':
+					return this.monthNames[dateMonth].slice(0, 1);
 				case 'mm':
 					return ('0' + (dateMonth + 1)).slice(-2);
 				case 'm':
 					return dateMonth + 1 + '';
-				case 'dddd':
+				case 'DDDD':
 					return this.dayNames[dateDay];
-				case 'ddd':
+				case 'DDD':
 					return this.dayNames[dateDay].slice(0, 3);
+				case 'DD':
+					return this.dayNames[dateDay].slice(0, 2);
+				case 'D':
+					return this.dayNames[dateDay].slice(0, 1);
 				case 'dd':
 					return ('0' + dateDate).slice(-2);
 				case 'd':
@@ -887,9 +901,9 @@ DatePicker.propTypes = {
 	firstDayInWeekShift: PropTypes.number,
 	dayNameLength: PropTypes.number,
 	weekEnds: PropTypes.arrayOf(PropTypes.number),
-	inputDateFormat: PropTypes.string,
-	headerDateFormat: PropTypes.string,
-	footerDateFormat: PropTypes.string,
+	inputDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+	headerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+	footerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	inputPlaceholder: PropTypes.string,
 	inputLabel: PropTypes.string,
 	dayNames: PropTypes.arrayOf(PropTypes.string),
