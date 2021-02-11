@@ -301,8 +301,7 @@ class DatePicker extends Component {
 		const dateMonth = date.getMonth();
 		const dateDate = date.getDate();
 		const dateDay = (date.getDay() + 6) % 7;
-		return format.replace(/yyyy|yy|MMMM|MMM|MM|M|mm|m|DDDD|DDD|DD|D|dd|d/gm, match => {
-			match = match.toLowerCase();
+		return format.replace(/Y/gm, 'y').replace(/yyyy|yy|MMMM|MMM|MM|M|mm|m|DDDD|DDD|DD|D|dd|d/gm, match => {
 			switch (match) {
 				case 'yyyy':
 					return dateYear + '';
