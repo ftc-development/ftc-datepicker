@@ -85,6 +85,7 @@ class DatePicker extends Component {
 			this.dayNames.slice(0, this.firstDayInWeekShift)
 		).map(name => name.slice(0, this.dayNameLength));
 		this.weekEnds = [5, 6];
+		this.selectedDateCanBeOutOfAllowedRange = false;
 		this.isPopUp = false;
 		this.isRangePicker = false;
 		this.showFooter = false;
@@ -170,29 +171,33 @@ class DatePicker extends Component {
 		let shownMonth = this.state.shownMonth;
 		let updateState = false;
 		if (this.propsAreNotTheSame(prevProps, [
-			'startDate', 'minDate', 'maxDate', 'isRangePicker', 'selectedDaysInOneClick', 'blackList'
+			'startDate', 'minDate', 'maxDate', 'isRangePicker', 'selectedDaysInOneClick', 'blackList',
+			'selectedDateCanBeOutOfAllowedRange'
 		])) {
 			updateState = true;
 			if (typeof props.startDate !== 'undefined') {
 				startDate = props.startDate;
 			}
 			startDate = this.isDate(startDate) ? this.toBeginningOfDay(startDate) : null;
-			startDate = startDate && (!this.minDate || startDate - this.minDate >= 0) &&
+			startDate = startDate && (this.selectedDateCanBeOutOfAllowedRange || (
+				(!this.minDate || startDate - this.minDate >= 0) &&
 				(!this.maxDate || this.maxDate - startDate >= (this.selectedDaysInOneClick - 1) * 86400000) &&
-				this.inBlackList(startDate) === this.CONSTANTS.NOT_IN_BLACK_LIST ? startDate : null;
+				this.inBlackList(startDate) === this.CONSTANTS.NOT_IN_BLACK_LIST
+			)) ? startDate : null;
 		}
 		if (this.propsAreNotTheSame(prevProps, [
 			'startDate', 'endDate', 'minDate', 'maxDate', 'isRangePicker', 'selectedDaysInOneClick',
-			'blackList'
+			'blackList', 'selectedDateCanBeOutOfAllowedRange'
 		])) {
 			updateState = true;
 			if (typeof props.endDate !== 'undefined') {
 				endDate = props.endDate;
 			}
 			endDate = this.isRangePicker && this.isDate(endDate) ? this.toBeginningOfDay(endDate) : null;
-			endDate = endDate && startDate && endDate - startDate > 0 &&
+			endDate = endDate && startDate && endDate - startDate > 0 && (this.selectedDateCanBeOutOfAllowedRange || (
 				(!this.maxDate || endDate - this.maxDate <= 0) &&
-				this.blackListIsNotInRange(startDate, endDate) ? endDate : null;
+				this.blackListIsNotInRange(startDate, endDate)
+			)) ? endDate : null;
 		}
 		if (this.propsAreNotTheSame(prevProps, [
 			'startDate', 'minDate', 'maxDate', 'shownMonth', 'isRangePicker', 'selectedDaysInOneClick',
@@ -542,6 +547,7 @@ class DatePicker extends Component {
 		if (
 			className === this.CONSTANTS.CLASS_NAMES.NORMAL && this.isRangePicker &&
 			this.state.startDate && !this.state.endDate && date - this.state.startDate > 0 &&
+			(!this.minDate || this.state.startDate - this.minDate >= 0) &&
 			this.blackListIsNotInRange(this.state.startDate, date)
 		) {
 			this.setState({dateHovered: date});
@@ -554,6 +560,7 @@ class DatePicker extends Component {
 			let endDate = null;
 			if (
 				this.isRangePicker && startDate && !this.state.endDate &&
+				(!this.minDate || this.state.startDate - this.minDate >= 0) &&
 				date - startDate > 0 && this.blackListIsNotInRange(startDate, date)
 			) {
 				endDate = date;
@@ -608,7 +615,7 @@ class DatePicker extends Component {
 				classNames.DISABLED : inBlackList === this.CONSTANTS.IN_BLACK_LIST ?
 				classNames.IN_BLACK_LIST : inBlackList === this.CONSTANTS.NEXT_TO_BLACK_LIST ||
 				(this.maxDate && - maxDateToItrationDate > 0 && - maxDateToItrationDate <
-				this.numberOfSelectedMSs) ? classNames.NEXT_TO_DISABLED : classNames.NORMAL;
+				this.selectedMSsInOneClick) ? classNames.NEXT_TO_DISABLED : classNames.NORMAL;
 			const itrationClassName2 = dayDate > 0 && this.weekEnds.indexOf(
 				(i + this.firstDayInWeekShift) % 7
 			) > -1 ? classNames.WEEK_END : null;
@@ -620,8 +627,8 @@ class DatePicker extends Component {
 				endDateToItrationDate === 0 ? classNames.RANGE_END : this.state.endDate &&
 				startDateToItrationDate > 0 && endDateToItrationDate < 0 ? classNames.IN_RANGE :
 				!this.isRangePicker && this.state.startDate && startDateToItrationDate > 0 &&
-				startDateToItrationDate < this.numberOfSelectedMSs ?
-				(startDateToItrationDate === this.numberOfSelectedMSs - 86400000 ?
+				startDateToItrationDate < this.selectedMSsInOneClick ?
+				(startDateToItrationDate === this.selectedMSsInOneClick - 86400000 ?
 				classNames.SELECTION_END : classNames.IN_SELECTION) : null;
 			const itrationClassName5 = dayDate <= 0 || !this.state.dateHovered ||
 				dateHoveredToItrationDate > 0 || startDateToItrationDate < 0 ? null :
@@ -766,6 +773,7 @@ class DatePicker extends Component {
 				case 'showFooter':
 				case 'showTitleDropDown':
 				case 'showInputLabel':
+				case 'selectedDateCanBeOutOfAllowedRange':
 					this[key] = !!props[key];
 					break;
 				case 'isRangePicker':
@@ -827,8 +835,9 @@ class DatePicker extends Component {
 			this.state.shownMonth.getMonth() + this.monthsInDatePicker - 1, 1) - this.maxMonth >= 0;
 		const selectedStart = this.state.startDate;
 		const selectedEnd = this.isRangePicker ? this.state.endDate :
-			this.selectedDaysInOneClick > 1 ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(),
-			selectedStart.getDate() + this.selectedDaysInOneClick - 1) : null;
+			selectedStart && this.selectedDaysInOneClick > 1 ? new Date(
+				selectedStart.getFullYear(), selectedStart.getMonth(), selectedStart.getDate() + this.selectedDaysInOneClick - 1
+			) : null;
 
 		// const highestZIndex = this.getHighestZIndex();
 
@@ -894,6 +903,7 @@ DatePicker.propTypes = {
 	showFooter: PropTypes.bool,
 	showTitleDropDown: PropTypes.bool,
 	showInputLabel: PropTypes.bool,
+	selectedDateCanBeOutOfAllowedRange: PropTypes.bool,
 	monthsInDatePicker: PropTypes.number,
 	monthStep: PropTypes.number,
 	selectedDaysInOneClick: PropTypes.number,
