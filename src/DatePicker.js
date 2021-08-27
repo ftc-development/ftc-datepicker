@@ -120,7 +120,7 @@ class DatePicker extends Component {
 		this.state = {
 			startDate: null,
 			endDate: null,
-			shownMonth: this.setShownMonth(new Date()),
+			shownMonth: null,
 			isVisible: false,
 			monthList: null,
 			dateHovered: null
@@ -204,15 +204,18 @@ class DatePicker extends Component {
 			'monthsInDatePicker', 'blackList'
 		])) {
 			updateState = true;
-			if (typeof props.shownMonth !== 'undefined') {
+			if (this.propsAreNotTheSame(prevProps, ['shownMonth']) && typeof props.shownMonth !== 'undefined') {
 				shownMonth = props.shownMonth;
+			}
+			else if (this.propsAreNotTheSame(prevProps, ['startDate']) && typeof props.startDate !== 'undefined') {
+				shownMonth = props.startDate;
 			}
 			const thisMonth = this.toBeginningOfMonth(new Date());
 			shownMonth = this.isDate(shownMonth) ? this.toBeginningOfMonth(shownMonth) : null;
 			shownMonth = this.setShownMonth(
 				shownMonth && (!this.minMonth || shownMonth - this.minMonth >= 0) &&
 				(!this.maxMonth || shownMonth - this.maxMonth <= 0) ? shownMonth : startDate ?
-				startDate : (!this.minMonth || thisMonth - this.minMonth >= 0) &&
+				this.toBeginningOfMonth(startDate) : (!this.minMonth || thisMonth - this.minMonth >= 0) &&
 				(!this.maxMonth || thisMonth - this.maxMonth <= 0) ? thisMonth :
 				this.minMonth ? this.minMonth : this.maxMonth
 			);
