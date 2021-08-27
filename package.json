@@ -1,6 +1,6 @@
 {
   "name": "ftc-datepicker",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "React Date Picker & Calendar",
   "main": "dist/DatePicker.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ftc-development/ftc-datepicker.git"
+    "url": "git+https://github.com/ftc-development/ftc-datepicker.git"
   },
   "keywords": [
     "datepicker",
@@ -39,5 +39,10 @@
   "peerDependencies": {
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/ftc-development/ftc-datepicker/issues"
+  },
+  "homepage": "https://github.com/ftc-development/ftc-datepicker#readme",
+  "dependencies": {}
 }
