@@ -120,7 +120,7 @@ class DatePicker extends Component {
 		this.state = {
 			startDate: null,
 			endDate: null,
-			shownMonth: null,
+			shownMonth: this.setShownMonth(new Date()),
 			isVisible: false,
 			monthList: null,
 			dateHovered: null
