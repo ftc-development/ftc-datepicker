@@ -1,6 +1,6 @@
 {
 	"name": "ftc-datepicker",
-	"version": "3.0.5",
+	"version": "3.0.6",
 	"description": "React Date Picker & Calendar",
 	"main": "dist/DatePicker.js",
 	"scripts": {

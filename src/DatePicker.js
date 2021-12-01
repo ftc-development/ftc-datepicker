@@ -115,6 +115,7 @@ class DatePicker extends Component {
 		this.nextButtonTemplate = null;
 		this.monthTitleDropDownIconTemplate = null;
 		this.dayTileTemplate = null;
+		this.inputPlaceholderIconTemplate = null;
 
 		// Set initial state
 		this.state = {
@@ -770,6 +771,7 @@ class DatePicker extends Component {
 				case 'nextButtonTemplate':
 				case 'monthTitleDropDownIconTemplate':
 				case 'dayTileTemplate':
+				case 'inputPlaceholderIconTemplate' :
 					this[key] = typeof props[key] === 'function' ? props[key] : this[key];
 					break;
 				case 'isPopUp':
@@ -853,9 +855,17 @@ class DatePicker extends Component {
 				ref={this.datePickerButton}
 			>
 				{this.showInputLabel && <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div>}
-				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>{!selectedStart ? this.inputPlaceholder : this.createDateString(
-					this.inputDateFormat, selectedStart, selectedEnd
-				)}</div>
+				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>
+					{!selectedStart ? this.inputPlaceholder : this.createDateString(
+						this.inputDateFormat, selectedStart, selectedEnd
+					)}
+					{this.inputPlaceholderIconTemplate && this.inputPlaceholderIconTemplate({
+						isOpen: this.state.isVisible,
+						startDate: this.cloneDate(this.state.startDate),
+						endDate: this.cloneDate(this.state.endDate),
+						shownMonth: this.cloneDate(this.state.shownMonth)
+					})}
+				</div>
 				{this.inputClearButtonTemplate && <div
 					className={classNames.INPUT_BUTTON}
 					onClick={this.inputClearClickHandler}
@@ -939,7 +949,8 @@ DatePicker.propTypes = {
 	nextButtonTemplate: PropTypes.func,
 	monthTitleDropDownIconTemplate: PropTypes.func,
 	dayTileTemplate: PropTypes.func,
-	onSelect: PropTypes.func
+	onSelect: PropTypes.func,
+	inputPlaceholderIconTemplate: PropTypes.func
 };
 
 export default DatePicker;
