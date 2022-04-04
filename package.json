@@ -1,6 +1,6 @@
 {
 	"name": "ftc-datepicker",
-	"version": "3.0.6",
+	"version": "3.0.7",
 	"description": "React Date Picker & Calendar",
 	"main": "dist/DatePicker.js",
 	"scripts": {
@@ -43,6 +43,6 @@
 		"style-loader": "^3.3.1",
 		"webpack": "^5.63.0",
 		"webpack-cli": "^4.9.1",
-		"webpack-dev-server": "^4.4.0"
+		"webpack-dev-server": "^4.7.4"
 	}
 }
