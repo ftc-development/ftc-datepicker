@@ -309,7 +309,7 @@ class DatePicker extends Component {
 		const dateYear = date.getFullYear();
 		const dateMonth = date.getMonth();
 		const dateDate = date.getDate();
-		const dateDay = (date.getDay() + 6) % 7;
+		const dateDay = this.dayNames[(date.getDay() + 6) % 7];
 		return format.replace(/Y/gm, 'y').replace(/yyyy|yy|MMMM|MMM|MM|M|mm|m|DDDD|DDD|DD|D|dd|d/gm, match => {
 			switch (match) {
 				case 'yyyy':
@@ -329,13 +329,13 @@ class DatePicker extends Component {
 				case 'm':
 					return dateMonth + 1 + '';
 				case 'DDDD':
-					return this.dayNames[dateDay];
+					return dateDay;
 				case 'DDD':
-					return this.dayNames[dateDay].slice(0, 3);
+					return dateDay.slice(0, 3);
 				case 'DD':
-					return this.dayNames[dateDay].slice(0, 2);
+					return dateDay.slice(0, 2);
 				case 'D':
-					return this.dayNames[dateDay].slice(0, 1);
+					return dateDay.slice(0, 1);
 				case 'dd':
 					return ('0' + dateDate).slice(-2);
 				case 'd':
@@ -598,6 +598,7 @@ class DatePicker extends Component {
 	// }
 
 	createDays = (year, month, today) => {
+		const monthKey = `${year}_${month + 1}`
 		const days = [];
 		const firstDayInMonthPosition = (new Date(
 			year, month, 1
@@ -639,7 +640,7 @@ class DatePicker extends Component {
 				startDateToItrationDate === 0 ? classNames.HOVER_START :
 				dateHoveredToItrationDate === 0 ? classNames.HOVER_END : classNames.IN_HOVER;
 			days.push(<div
-				key={i}
+				key={`day_${monthKey}_${dayDate}`}
 				className={classNames.DAY + ' ' + itrationClassName1 +
 					(itrationClassName2 ? ' ' + itrationClassName2 : '') +
 					(itrationClassName3 ? ' ' + itrationClassName3 : '') +
@@ -665,9 +666,10 @@ class DatePicker extends Component {
 		const months = [];
 		for (let i=0; i<this.monthsInDatePicker; i++) {
 			const monthDate = new Date(shownYear, shownMonth + i, 1);
+			const monthKey = this.dateToString(monthDate, 'yyyy_m')
 			if (!this.maxMonth || monthDate - this.maxMonth <= 0) {
 				months.push(
-					<div className={classNames.MONTH_CONTAINER} key={i}>
+					<div className={classNames.MONTH_CONTAINER} key={`month_${monthKey}`}>
 						{!this.showTitleDropDown ? <div className={classNames.MONTH_TITLE_CONTENT}>
 							{this.dateToString(monthDate, this.headerDateFormat)}
 						</div> : <div className={classNames.MONTH_TITLE_CONTAINER}>
@@ -688,8 +690,8 @@ class DatePicker extends Component {
 								className={classNames.MONTH_LIST}
 								ref={this.monthListContainer}
 							>
-								{this.createMonthList(monthDate).map((item, index) => <li
-									key={index}
+								{this.createMonthList(monthDate).map((item) => <li
+									key={`month_${monthKey}_list_${this.dateToString(item.date, 'yyyy_m')}`}
 									className={classNames.MONTH_LIST_ITEM + (item.selected ? ' ' +
 										classNames.MONTH_LIST_ITEM_SELECTED : '')}
 									onClick={() => this.monthListItemClickHandler(item.date, i)}
@@ -699,7 +701,7 @@ class DatePicker extends Component {
 						</div>}
 						<div className={classNames.DAY_NAMES_CONTAINER}>
 							{this.shiftedDayNames.map((day, index) => <div
-								key={index}
+								key={`day_name_${monthKey}_${day}`}
 								className={classNames.DAY_NAME + (this.weekEnds.indexOf(
 									(index + this.firstDayInWeekShift) % 7
 								) === -1 ? '' : ' ' + classNames.DAY_NAME_WEEK_END)}
