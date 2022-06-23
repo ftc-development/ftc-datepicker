@@ -110,6 +110,7 @@ class DatePicker extends Component {
 			today.getFullYear(), today.getMonth() + 24, 1
 		));
 		this.onSelect = null;
+		this.onToggle = null;
 		this.inputClearButtonTemplate = null;
 		this.previousButtonTemplate = null;
 		this.nextButtonTemplate = null;
@@ -163,6 +164,9 @@ class DatePicker extends Component {
 			isVisible: false,
 			monthList: null
 		});
+		if (this.onToggle) {
+			this.onToggle(false);
+		}
 	};
 
 	updateState = prevProps => {
@@ -426,18 +430,23 @@ class DatePicker extends Component {
 	};
 
 	datePickerToggle = e => {
+		const isVisible = !this.state.isVisible;
 		this.setState({
-			isVisible: !this.state.isVisible,
+			isVisible: isVisible,
 			monthList: null
 		});
+		if (this.onToggle) {
+			this.onToggle(isVisible);
+		}
 	};
 
 	setSelection = (start, end) => {
+		const isVisible = this.isPopUp && (end || !this.isRangePicker) ? false : true;
 		this.setState({
 			startDate: start,
 			endDate: end,
 			dateHovered: null,
-			isVisible: this.isPopUp && (end || !this.isRangePicker) ? false : true
+			isVisible: isVisible
 		});
 		if (this.onSelect) {
 			this.onSelect({
@@ -446,11 +455,15 @@ class DatePicker extends Component {
 				shownMonth: this.cloneDate(this.state.shownMonth)
 			});
 		}
+		if (!isVisible && this.onToggle) {
+			this.onToggle(false);
+		}
 	};
 
 	inputClearClickHandler = e => {
 		if (this.state.startDate) {
 			e.stopPropagation();
+			const isVisible = this.state.isVisible;
 			this.setState({
 				startDate: null,
 				endDate: null,
@@ -463,6 +476,9 @@ class DatePicker extends Component {
 					endDate: null,
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				});
+			}
+			if (isVisible && this.onToggle) {
+				this.onToggle(false);
 			}
 		}
 	};
@@ -768,6 +784,7 @@ class DatePicker extends Component {
 					this[key] = this.isValidDateFormat(props[key]) ? props[key] : this[key];
 					break;
 				case 'onSelect':
+				case 'onToggle':
 				case 'inputClearButtonTemplate':
 				case 'previousButtonTemplate':
 				case 'nextButtonTemplate':
@@ -952,6 +969,7 @@ DatePicker.propTypes = {
 	monthTitleDropDownIconTemplate: PropTypes.func,
 	dayTileTemplate: PropTypes.func,
 	onSelect: PropTypes.func,
+	onToggle: PropTypes.func,
 	inputPlaceholderIconTemplate: PropTypes.func
 };
 
