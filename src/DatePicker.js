@@ -26,6 +26,8 @@ class DatePicker extends Component {
 			IN_BLACK_LIST: 'inBlackList',
 			NEXT_TO_BLACK_LIST: 'nextToBlackList',
 			NOT_IN_BLACK_LIST: 'notInBlackList',
+			NEXT_BUTTON_LABEL: 'Click here to go to next month',
+			BACK_BUTTON_LABEL: 'Click here to go to previous month',
 			CLASS_NAMES: {
 				DATE_PICKER_CONTAINER: 'date-picker-container',
 				DATE_PICKER_INPUT: 'date-picker-input',
@@ -97,6 +99,8 @@ class DatePicker extends Component {
 		this.selectedMSsInOneClick = this.selectedDaysInOneClick * 86400000;
 		this.inputPlaceholder = this.CONSTANTS.INPUT_PLACEHOLDER;
 		this.inputLabel = this.CONSTANTS.INPUT_LABEL;
+		this.nextButtonLabel = this.CONSTANTS.NEXT_BUTTON_LABEL;
+		this.backButtonLabel = this.CONSTANTS.BACK_BUTTON_LABEL;
 		this.inputDateFormat = this.CONSTANTS.INPUT_DATE_FORMAT;
 		this.headerDateFormat = this.CONSTANTS.HEADER_DATE_FORMAT;
 		this.footerDateFormat = this.CONSTANTS.FOOTER_DATE_FORMAT;
@@ -438,6 +442,18 @@ class DatePicker extends Component {
 		if (this.onToggle) {
 			this.onToggle(isVisible);
 		}
+		if (isVisible) {
+			setTimeout(() => {
+				const element = document.querySelector('[data-id="date-picker-dialog"]');
+				if (element) this.trapFocus(element, (e) => {
+					if (e.key === 'Escape') {
+						this.setState(() => ({
+							isVisible: false
+						}));
+					}
+				});
+			});
+		}
 	};
 
 	setSelection = (start, end) => {
@@ -501,6 +517,20 @@ class DatePicker extends Component {
 		this.setState({
 			monthList: this.state.monthList === index ? null : index
 		});
+
+		setTimeout(() => {
+			const element = e.target?.parentNode?.querySelector('[data-id="month-list-selection"]');
+			element && this.trapFocus(element, (e) => {
+				if(e.key === 'Escape') {
+					this.setState({
+						monthList: this.state.monthList === index ? null : index
+					});
+					e.stopPropagation();
+					e.preventDefault();
+				}
+			})	
+		});
+		
 	};
 
 	createMonthList = date => {
@@ -601,6 +631,12 @@ class DatePicker extends Component {
 		}
 	};
 
+	triggerClick = (e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.target.click();
+		}
+	}
+
 	// getHighestZIndex = () => {
 	// 	let highestZIndex = 0;
 	// 	const elements = document.getElementsByTagName('*');
@@ -655,8 +691,13 @@ class DatePicker extends Component {
 				dateHoveredToItrationDate > 0 || startDateToItrationDate < 0 ? null :
 				startDateToItrationDate === 0 ? classNames.HOVER_START :
 				dateHoveredToItrationDate === 0 ? classNames.HOVER_END : classNames.IN_HOVER;
+			const dayLabel = ('0' + dayDate).slice(-2);
 			days.push(<div
-				key={`day_${monthKey}_${dayDate}`}
+				key={`day_${monthKey}_${dayDate}_${i}`}
+				data-id={`grid-${dayLabel}`}
+				tabIndex="-1"
+				aria-disabled={!!itrationClassName1 && itrationClassName1.indexOf('day-disabled') !== -1}
+				aria-selected={!!itrationClassName4 && itrationClassName4.indexOf('day-selection') !== -1}
 				className={classNames.DAY + ' ' + itrationClassName1 +
 					(itrationClassName2 ? ' ' + itrationClassName2 : '') +
 					(itrationClassName3 ? ' ' + itrationClassName3 : '') +
@@ -669,8 +710,9 @@ class DatePicker extends Component {
 				startDate: this.cloneDate(this.state.startDate),
 				endDate: this.cloneDate(this.state.endDate),
 				shownMonth: this.cloneDate(this.state.shownMonth),
-				currentDate: this.cloneDate(itrationDate)
-			}) : ('0' + dayDate).slice(-2)}</div>);
+				currentDate: this.cloneDate(itrationDate),
+				dayDate: dayLabel
+			}) : dayLabel}</div>);
 		}
 		return days;
 	};
@@ -684,17 +726,24 @@ class DatePicker extends Component {
 			const monthDate = new Date(shownYear, shownMonth + i, 1);
 			const monthKey = this.dateToString(monthDate, 'yyyy_m')
 			if (!this.maxMonth || monthDate - this.maxMonth <= 0) {
+				const days = this.createDays(shownYear, shownMonth + i, today);
+				const monthLabel = this.dateToString(monthDate, this.headerDateFormat);
 				months.push(
-					<div className={classNames.MONTH_CONTAINER} key={`month_${monthKey}`}>
+					<div data-index="1" className={classNames.MONTH_CONTAINER} key={`month_${monthKey}_${i}`} role="cell">
 						{!this.showTitleDropDown ? <div className={classNames.MONTH_TITLE_CONTENT}>
-							{this.dateToString(monthDate, this.headerDateFormat)}
+							{monthLabel}
 						</div> : <div className={classNames.MONTH_TITLE_CONTAINER}>
 							<div
+								tabIndex="0"
+								role="combobox"
+								aria-expanded={this.state.monthList === i}
+								aria-label={monthLabel}
 								className={classNames.MONTH_TITLE + ' ' + (this.state.monthList === i ?
 									classNames.MONTH_TITLE_OPEN : classNames.MONTH_TITLE_CLOSED)}
 								onClick={e => this.monthTitleClickHandler(e, i)}
+								onKeyDown={this.triggerClick}
 							>
-								{this.dateToString(monthDate, this.headerDateFormat)}
+								{monthLabel}
 								{this.monthTitleDropDownIconTemplate && this.monthTitleDropDownIconTemplate({
 									startDate: this.cloneDate(this.state.startDate),
 									endDate: this.cloneDate(this.state.endDate),
@@ -703,29 +752,70 @@ class DatePicker extends Component {
 								})}
 							</div>
 							{this.state.monthList === i && <ul
+								role="list"
 								className={classNames.MONTH_LIST}
 								ref={this.monthListContainer}
+								data-id="month-list-selection"
 							>
-								{this.createMonthList(monthDate).map((item) => <li
-									key={`month_${monthKey}_list_${this.dateToString(item.date, 'yyyy_m')}`}
+								{this.createMonthList(monthDate).map((item, index) => <li
+									tabIndex="0"
+									key={`month_${monthKey}_list_${this.dateToString(item.date, 'yyyy_m')}_${index}`}
 									className={classNames.MONTH_LIST_ITEM + (item.selected ? ' ' +
 										classNames.MONTH_LIST_ITEM_SELECTED : '')}
 									onClick={() => this.monthListItemClickHandler(item.date, i)}
+									onKeyDown={this.triggerClick}
 									ref={item.selected ? this.monthListSelectedItem : null}
 								>{this.dateToString(item.date, this.headerDateFormat)}</li>)}
 							</ul>}
 						</div>}
 						<div className={classNames.DAY_NAMES_CONTAINER}>
 							{this.shiftedDayNames.map((day, index) => <div
-								key={`day_name_${monthKey}_${day}`}
+								key={`day_name_${monthKey}_${day}_${index}`}
 								className={classNames.DAY_NAME + (this.weekEnds.indexOf(
 									(index + this.firstDayInWeekShift) % 7
 								) === -1 ? '' : ' ' + classNames.DAY_NAME_WEEK_END)}
 							>{day}</div>)}
 						</div>
-						<div className={classNames.DAYS_CONTAINER}>
-							{this.createDays(shownYear, shownMonth + i, today)}
-						</div>
+						<div 
+							className={classNames.DAYS_CONTAINER} 
+							tabIndex="0" 
+							role="table"
+							data-index="1"
+							data-id="days-container"
+							onKeyDown={(e) => {
+								const KEYCODE_TAB = 9;
+								const isTabPressed = (e.key === 'Tab' || e.keyCode === KEYCODE_TAB);
+								if ( e.shiftKey || isTabPressed) {
+									return;
+								}
+								const node = e.target.getAttribute('data-id') === 'days-container' ?
+									e.target : e.target.parentNode;
+								let index = parseInt(node.getAttribute('data-index'), 10);
+								
+								const length = node?.querySelectorAll('.day:not(.day-empty)')?.length || 0;
+								if (e.key === 'ArrowDown') {
+									index = index + 7 > length ? index: index + 7;
+									e.preventDefault();
+								} else if(e.key === 'ArrowUp') {
+									index = index - 7 < 1 ? index: index - 7;
+									e.preventDefault();
+								} else if(e.key === 'ArrowRight') {
+									index = index + 1 > length ? index: index + 1;
+								} else if(e.key === 'ArrowLeft') {
+									index = index < 2 ? index: index - 1;
+								} 
+								
+								const position = index < 10 ? '0' + index : '' + index;
+								node.setAttribute('data-index', index+'');
+								node.querySelector('div[data-id="grid-' + position + '"]').focus();
+								if (e.key === 'Enter' || e.key === ' ') {
+									node.querySelector('div[data-id="grid-' + position + '"]').click();
+								}
+								
+							}}
+						>
+							{days}
+						</div>		
 					</div>
 				);
 			}
@@ -733,8 +823,35 @@ class DatePicker extends Component {
 		return months;
 	};
 
-	render() {
+	trapFocus = (element, customFn = undefined) => {
+		element.addEventListener('keydown', (e) => {
+		  const KEYCODE_TAB = 9;
+		  const isTabPressed = (e.key === 'Tab' || e.keyCode === KEYCODE_TAB);
+		  const focusableEls = element.querySelectorAll('[tabIndex="0"]:not([disabled]):not([aria-disabled]), [tabIndex="1"]:not([disabled]):not([aria-disabled])');
+		  const firstFocusableEl = focusableEls[0];  
+		  const lastFocusableEl = focusableEls[focusableEls.length - 1];
 
+		  typeof customFn === 'function' && customFn(e);
+
+		  if (!isTabPressed) { 
+			return; 
+		  }
+	  
+		  if ( e.shiftKey ) /* shift + tab */ {
+			if (document.activeElement === firstFocusableEl) {
+			  lastFocusableEl.focus();
+				e.preventDefault();
+			  }
+			} else /* tab */ {
+			if (document.activeElement === lastFocusableEl) {
+			  firstFocusableEl.focus();
+				e.preventDefault();
+			  }
+			}
+		});
+	}
+
+	render() {
 		// Update props
 		const today = this.toBeginningOfDay(new Date);
 		const props = this.props;
@@ -742,6 +859,8 @@ class DatePicker extends Component {
 			switch (key) {
 				case 'inputPlaceholder':
 				case 'inputLabel':
+				case 'backButtonLabel':
+				case 'nextButtonLabel':
 					this[key] = typeof props[key] === 'string' ? props[key] : this[key];
 					break;
 				case 'weekEnds':
@@ -852,6 +971,11 @@ class DatePicker extends Component {
 					this.maxMonth = this[key] ? this.toBeginningOfMonth(this[key]) : null;
 			}
 		});
+		Object.keys(this.props).forEach(key => {
+			if (key.indexOf('aria-') !== -1) {
+				this[key] = this.props[key];
+			}
+		})
 
 		const classNames = this.CONSTANTS.CLASS_NAMES;
 		const disablePreviousBTN = this.minMonth && this.state.shownMonth - this.minMonth <= 0;
@@ -864,12 +988,18 @@ class DatePicker extends Component {
 			) : null;
 
 		// const highestZIndex = this.getHighestZIndex();
+		const ariaProperties = {
+			...(this['aria-label'] ? {'aria-label': this['aria-label']} : {}),
+			...(this['aria-describedby'] ? {'aria-describedby': this['aria-describedby']} : {})
+		};
 
-		return <div className={classNames.DATE_PICKER_CONTAINER}>
+		return <div className={classNames.DATE_PICKER_CONTAINER} {...ariaProperties} >
 			{this.isPopUp && <div
 				className={classNames.DATE_PICKER_INPUT + ' ' + (
 					this.state.startDate ? classNames.DATE_PICKER_INPUT_NOT_EMPTY : classNames.DATE_PICKER_INPUT_EMPTY
 				)}
+				tabIndex="0" 
+				onKeyDown={this.triggerClick}
 				onClick={this.datePickerToggle}
 				ref={this.datePickerButton}
 			>
@@ -895,14 +1025,15 @@ class DatePicker extends Component {
 				})}</div>}
 			</div>}
 			{(!this.isPopUp || this.state.isVisible) && <div
+				role="dialog"
+				aria-modal="true"
+				data-id="date-picker-dialog"
 				className={classNames.DATE_PICKER}
 				onClick={this.datePickerClickHandler}
 				style={this.isPopUp ? {zIndex: 16777271} : {}}
 				ref={this.datePickerPopUp}
 			>
-				<div className={classNames.MONTHS_CONTAINER}>
-					{this.createMonths(today)}
-				</div>
+
 				{this.showFooter && <div className={classNames.DATE_PICKER_FOOTER}>
 					{!selectedStart ? '' : this.createDateString(
 						this.footerDateFormat, selectedStart, selectedEnd
@@ -910,7 +1041,12 @@ class DatePicker extends Component {
 				</div>}
 				<div
 					className={classNames.BTN_PREVIOUS + (disablePreviousBTN ? ' ' + classNames.BTN_DISABLED : '')}
+					tabIndex="0"
+					role="button"
+					aria-label={this.backButtonLabel}
+					aria-disabled={disablePreviousBTN || undefined}
 					onClick={disablePreviousBTN ? null : () => this.monthShiftHandler(-this.monthStep)}
+					onKeyDown={this.triggerClick}
 				>{!this.previousButtonTemplate ? 'Previous' : this.previousButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
@@ -918,12 +1054,24 @@ class DatePicker extends Component {
 				})}</div>
 				<div
 					className={classNames.BTN_NEXT + (disableNextBTN ? ' ' + classNames.BTN_DISABLED : '')}
+					tabIndex="0"
+					role="button"
+					aria-label={this.nextButtonLabel}
+					aria-disabled={disableNextBTN || undefined}
 					onClick={disableNextBTN ? null : () => this.monthShiftHandler(this.monthStep)}
+					onKeyDown={this.triggerClick}
 				>{!this.nextButtonTemplate ? 'Next' : this.nextButtonTemplate({
 					startDate: this.cloneDate(this.state.startDate),
 					endDate: this.cloneDate(this.state.endDate),
 					shownMonth: this.cloneDate(this.state.shownMonth)
 				})}</div>
+				<div className={classNames.MONTHS_CONTAINER}>
+					{this.createMonths(today)}
+				</div>
+				<span tabIndex="0" onFocus={() => {
+					const element = document.querySelector('[data-id="date-picker-dialog"]');
+					element?.focus();
+				}}></span>
 			</div>}
 		</div>;
 	}
@@ -947,6 +1095,8 @@ DatePicker.propTypes = {
 	footerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	inputPlaceholder: PropTypes.string,
 	inputLabel: PropTypes.string,
+	nextButtonLabel: PropTypes.string,
+	backButtonLabel: PropTypes.string,
 	dayNames: PropTypes.arrayOf(PropTypes.string),
 	monthNames: PropTypes.arrayOf(PropTypes.string),
 	minDate: PropTypes.instanceOf(Date),
