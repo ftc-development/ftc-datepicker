@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // import './DatePicker.css';
+
 class DatePicker extends Component {
 	constructor(props) {
 		super(props);
@@ -38,7 +39,8 @@ class DatePicker extends Component {
 				INPUT_BUTTON: 'input-button',
 				DATE_PICKER: 'date-picker',
 				MONTHS_CONTAINER: 'months-container',
-				DATE_PICKER_FOOTER: 'date-picker-footer',
+				DATE_PICKER_RANGE_DETAILS: 'date-picker-range-details',
+				FOOTER_CONTAINER: 'footer-container',
 				BTN_PREVIOUS: 'btn-previous',
 				BTN_NEXT: 'btn-next',
 				BTN_DISABLED: 'btn-disabled',
@@ -90,7 +92,7 @@ class DatePicker extends Component {
 		this.selectedDateCanBeOutOfAllowedRange = false;
 		this.isPopUp = false;
 		this.isRangePicker = false;
-		this.showFooter = false;
+		this.showDateRangeDetails = false;
 		this.showTitleDropDown = false;
 		this.showInputLabel = false;
 		this.monthsInDatePicker = 1;
@@ -103,7 +105,7 @@ class DatePicker extends Component {
 		this.backButtonLabel = this.CONSTANTS.BACK_BUTTON_LABEL;
 		this.inputDateFormat = this.CONSTANTS.INPUT_DATE_FORMAT;
 		this.headerDateFormat = this.CONSTANTS.HEADER_DATE_FORMAT;
-		this.footerDateFormat = this.CONSTANTS.FOOTER_DATE_FORMAT;
+		this.datePickerRangeFormat = this.CONSTANTS.FOOTER_DATE_FORMAT;
 		this.blackList = [];
 		this.minDate = null;
 		this.minMonth = this.minDate ? this.toBeginningOfMonth(this.minDate) : null;
@@ -115,7 +117,9 @@ class DatePicker extends Component {
 		));
 		this.onSelect = null;
 		this.onToggle = null;
+		this.onMonthChange = null;
 		this.inputClearButtonTemplate = null;
+		this.footerTemplate = null;
 		this.previousButtonTemplate = null;
 		this.nextButtonTemplate = null;
 		this.monthTitleDropDownIconTemplate = null;
@@ -430,6 +434,19 @@ class DatePicker extends Component {
 		if (this.minMonth && shownMonth - this.minMonth < 0) {
 			shownMonth = this.toBeginningOfMonth(this.minMonth);
 		}
+
+		if (this.onMonthChange && (
+			!this.state || !this.state.shownMonth ||
+			shownMonth.getFullYear() !== this.state.shownMonth.getFullYear() ||
+			shownMonth.getMonth() !== this.state.shownMonth.getMonth()
+		)) {
+			this.onMonthChange({
+				startDate: this.cloneDate(this.state.startDate),
+				endDate: this.cloneDate(this.state.endDate),
+				shownMonth: this.cloneDate(shownMonth)
+			})
+		}
+
 		return shownMonth;
 	};
 
@@ -853,7 +870,7 @@ class DatePicker extends Component {
 
 	render() {
 		// Update props
-		const today = this.toBeginningOfDay(new Date);
+		const today = this.toBeginningOfDay(new Date());
 		const props = this.props;
 		Object.keys(this.props).forEach(key => {
 			switch (key) {
@@ -899,12 +916,14 @@ class DatePicker extends Component {
 					break;
 				case 'inputDateFormat':
 				case 'headerDateFormat':
-				case 'footerDateFormat':
+				case 'datePickerRangeFormat':
 					this[key] = this.isValidDateFormat(props[key]) ? props[key] : this[key];
 					break;
 				case 'onSelect':
 				case 'onToggle':
+				case 'onMonthChange':
 				case 'inputClearButtonTemplate':
+				case 'footerTemplate':
 				case 'previousButtonTemplate':
 				case 'nextButtonTemplate':
 				case 'monthTitleDropDownIconTemplate':
@@ -913,7 +932,7 @@ class DatePicker extends Component {
 					this[key] = typeof props[key] === 'function' ? props[key] : this[key];
 					break;
 				case 'isPopUp':
-				case 'showFooter':
+				case 'showDateRangeDetails':
 				case 'showTitleDropDown':
 				case 'showInputLabel':
 				case 'selectedDateCanBeOutOfAllowedRange':
@@ -1033,12 +1052,6 @@ class DatePicker extends Component {
 				style={this.isPopUp ? {zIndex: 16777271} : {}}
 				ref={this.datePickerPopUp}
 			>
-
-				{this.showFooter && <div className={classNames.DATE_PICKER_FOOTER}>
-					{!selectedStart ? '' : this.createDateString(
-						this.footerDateFormat, selectedStart, selectedEnd
-					)}
-				</div>}
 				<div
 					className={classNames.BTN_PREVIOUS + (disablePreviousBTN ? ' ' + classNames.BTN_DISABLED : '')}
 					tabIndex="0"
@@ -1068,6 +1081,18 @@ class DatePicker extends Component {
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
 				</div>
+				{this.footerTemplate && <div className={classNames.FOOTER_CONTAINER}>
+					{this.footerTemplate({
+						startDate: this.cloneDate(this.state.startDate),
+						endDate: this.cloneDate(this.state.endDate),
+						shownMonth: this.cloneDate(this.state.shownMonth)
+					})}
+				</div>}
+				{this.showDateRangeDetails && <div className={classNames.DATE_PICKER_RANGE_DETAILS}>
+					{!selectedStart ? '' : this.createDateString(
+						this.datePickerRangeFormat, selectedStart, selectedEnd
+					)}
+				</div>}
 				<span tabIndex="0" onFocus={() => {
 					const element = document.querySelector('[data-id="date-picker-dialog"]');
 					element?.focus();
@@ -1080,7 +1105,7 @@ class DatePicker extends Component {
 DatePicker.propTypes = {
 	isPopUp: PropTypes.bool,
 	isRangePicker: PropTypes.bool,
-	showFooter: PropTypes.bool,
+	showDateRangeDetails: PropTypes.bool,
 	showTitleDropDown: PropTypes.bool,
 	showInputLabel: PropTypes.bool,
 	selectedDateCanBeOutOfAllowedRange: PropTypes.bool,
@@ -1092,7 +1117,7 @@ DatePicker.propTypes = {
 	weekEnds: PropTypes.arrayOf(PropTypes.number),
 	inputDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	headerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-	footerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+	datePickerRangeFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	inputPlaceholder: PropTypes.string,
 	inputLabel: PropTypes.string,
 	nextButtonLabel: PropTypes.string,
@@ -1114,12 +1139,14 @@ DatePicker.propTypes = {
 		})
 	])),
 	inputClearButtonTemplate: PropTypes.func,
+	footerTemplate: PropTypes.func,
 	previousButtonTemplate: PropTypes.func,
 	nextButtonTemplate: PropTypes.func,
 	monthTitleDropDownIconTemplate: PropTypes.func,
 	dayTileTemplate: PropTypes.func,
 	onSelect: PropTypes.func,
 	onToggle: PropTypes.func,
+	onMonthChange: PropTypes.func,
 	inputPlaceholderIconTemplate: PropTypes.func
 };
 
