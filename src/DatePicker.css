@@ -193,6 +193,12 @@
 .date-picker-container .date-picker .months-container .month-container .days-container .day-normal:hover {
 	background-color: #666;
 }
+.date-picker-container .date-picker .months-container .month-container .days-container .day-normal.day-in-flexible-range:not(.day-selection-start-end) {
+	background-color: pink;
+}
+.date-picker-container .date-picker .flexible-date-container .flexible-date-buttons-container .flexible-date-button.flexible-date-button-selected {
+	background-color: red;
+}
 .date-picker-container .date-picker .date-picker-details {
 	margin: 5px;
 	font-size: 14px;

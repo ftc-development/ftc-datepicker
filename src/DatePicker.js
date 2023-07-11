@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef, Fragment } from 'react';
 import PropTypes from 'prop-types';
 
 // import './DatePicker.css';
@@ -7,10 +7,14 @@ class DatePicker extends Component {
 	constructor(props) {
 		super(props);
 
-		this.monthListSelectedItem = React.createRef();
-		this.monthListContainer = React.createRef();
-		this.datePickerPopUp = React.createRef();
-		this.datePickerButton = React.createRef();
+		this.monthListSelectedItem = createRef();
+		this.monthListContainer = createRef();
+		this.datePickerPopUp = createRef();
+		this.datePickerButton = createRef();
+		this.flexibleDateRangeRef = createRef();
+		this.flexibleSelectedDateRef = createRef();
+		this.isFirstDayInFlexibleRangeSet = createRef();
+		this.lastDayInFlexibleRange = createRef();
 
 		// Set constants
 		this.CONSTANTS = {
@@ -20,6 +24,7 @@ class DatePicker extends Component {
 				'October', 'November', 'December'
 			],
 			INPUT_PLACEHOLDER: 'Click here to select date',
+			FLEXIBLE_DATE_TITLE: 'Arrival day earlier or later',
 			INPUT_LABEL: 'Click here to select date',
 			INPUT_DATE_FORMAT: 'DDD, MMM dd yyyy',
 			HEADER_DATE_FORMAT: 'MMMM yyyy',
@@ -29,6 +34,7 @@ class DatePicker extends Component {
 			NOT_IN_BLACK_LIST: 'notInBlackList',
 			NEXT_BUTTON_LABEL: 'Click here to go to next month',
 			BACK_BUTTON_LABEL: 'Click here to go to previous month',
+			FLEXIBLE_DATE_SELECT_BUTTON_LABEL: 'Select',
 			CLASS_NAMES: {
 				DATE_PICKER_CONTAINER: 'date-picker-container',
 				DATE_PICKER_INPUT: 'date-picker-input',
@@ -41,6 +47,12 @@ class DatePicker extends Component {
 				MONTHS_CONTAINER: 'months-container',
 				DATE_PICKER_RANGE_DETAILS: 'date-picker-range-details',
 				FOOTER_CONTAINER: 'footer-container',
+				FLEXIBLE_DATE_CONTAINER: 'flexible-date-container',
+				FLEXIBLE_DATE_TITLE_CONTAINER: 'flexible-date-title-container',
+				FLEXIBLE_DATE_BUTTONS_CONTAINER: 'flexible-date-buttons-container',
+				FLEXIBLE_DATE_BUTTON: 'flexible-date-button',
+				FLEXIBLE_DATE_BUTTON_SELECTED: 'flexible-date-button-selected',
+				FLEXIBLE_DATE_SAVE_BUTTON: 'flexible-date-save-button',
 				BTN_PREVIOUS: 'btn-previous',
 				BTN_NEXT: 'btn-next',
 				BTN_DISABLED: 'btn-disabled',
@@ -75,7 +87,13 @@ class DatePicker extends Component {
 				IN_SELECTION: 'day-in-selection',
 				HOVER_START: 'day-hover-start',
 				HOVER_END: 'day-hover-end',
-				IN_HOVER: 'day-in-hover'
+				IN_HOVER: 'day-in-hover',
+				IN_FLEXIBLE_RANGE: 'day-in-flexible-range',
+				IN_FLEXIBLE_RANGE_FROM_LEFT: 'day-in-flexible-range-from-left',
+				IN_FLEXIBLE_RANGE_FROM_RIGHT: 'day-in-flexible-range-from-right',
+				IN_FLEXIBLE_RANGE_CENTER: 'day-in-flexible-range-center',
+				FIRST_IN_FLEXIBLE_RANGE: 'first-day-in-flexible-range',
+				LAST_IN_FLEXIBLE_RANGE: 'last-day-in-flexible-range'
 			}
 		};
 
@@ -89,20 +107,25 @@ class DatePicker extends Component {
 			this.dayNames.slice(0, this.firstDayInWeekShift)
 		).map(name => name.slice(0, this.dayNameLength));
 		this.weekEnds = [5, 6];
+		this.flexibleDateRanges = [];
+		this.flexibleDateRangesLabels = [];
 		this.selectedDateCanBeOutOfAllowedRange = false;
 		this.isPopUp = false;
 		this.isRangePicker = false;
 		this.showDateRangeDetails = false;
 		this.showTitleDropDown = false;
 		this.showInputLabel = false;
+		this.isFlexibleDate = false;
 		this.monthsInDatePicker = 1;
 		this.monthStep = 1;
 		this.selectedDaysInOneClick = 1;
 		this.selectedMSsInOneClick = this.selectedDaysInOneClick * 86400000;
 		this.inputPlaceholder = this.CONSTANTS.INPUT_PLACEHOLDER;
+		this.flexibleDateTitle = this.CONSTANTS.FLEXIBLE_DATE_TITLE;
 		this.inputLabel = this.CONSTANTS.INPUT_LABEL;
 		this.nextButtonLabel = this.CONSTANTS.NEXT_BUTTON_LABEL;
 		this.backButtonLabel = this.CONSTANTS.BACK_BUTTON_LABEL;
+		this.flexibleDateSelectButtonLabel = this.CONSTANTS.FLEXIBLE_DATE_SELECT_BUTTON_LABEL;
 		this.inputDateFormat = this.CONSTANTS.INPUT_DATE_FORMAT;
 		this.headerDateFormat = this.CONSTANTS.HEADER_DATE_FORMAT;
 		this.datePickerRangeFormat = this.CONSTANTS.FOOTER_DATE_FORMAT;
@@ -133,7 +156,8 @@ class DatePicker extends Component {
 			shownMonth: this.setShownMonth(new Date()),
 			isVisible: false,
 			monthList: null,
-			dateHovered: null
+			dateHovered: null,
+			flexibleDateRange: 0
 		};
 
 	}
@@ -170,7 +194,9 @@ class DatePicker extends Component {
 		}
 		this.setState({
 			isVisible: false,
-			monthList: null
+			monthList: null,
+			flexibleDateRange: this.flexibleDateRangeRef.current,
+			startDate: this.isFlexibleDate ? this.flexibleSelectedDateRef.current : this.state.startDate
 		});
 		if (this.onToggle) {
 			this.onToggle(false);
@@ -182,6 +208,7 @@ class DatePicker extends Component {
 		let startDate = this.state.startDate;
 		let endDate = this.state.endDate;
 		let shownMonth = this.state.shownMonth;
+		let flexibleDateRange = this.state.flexibleDateRange;
 		let updateState = false;
 		if (this.propsAreNotTheSame(prevProps, [
 			'startDate', 'minDate', 'maxDate', 'isRangePicker', 'selectedDaysInOneClick', 'blackList',
@@ -197,6 +224,13 @@ class DatePicker extends Component {
 				(!this.maxDate || this.maxDate - startDate >= (this.selectedDaysInOneClick - 1) * 86400000) &&
 				this.inBlackList(startDate) === this.CONSTANTS.NOT_IN_BLACK_LIST
 			)) ? startDate : null;
+			if (
+				(startDate && !this.state.startDate) ||
+				(!startDate && this.state.startDate) ||
+				startDate - this.state.startDate !== 0
+			) {
+				this.flexibleSelectedDateRef.current = startDate;
+			}
 		}
 		if (this.propsAreNotTheSame(prevProps, [
 			'startDate', 'endDate', 'minDate', 'maxDate', 'isRangePicker', 'selectedDaysInOneClick',
@@ -233,11 +267,24 @@ class DatePicker extends Component {
 				this.minMonth ? this.minMonth : this.maxMonth
 			);
 		}
+		if (this.propsAreNotTheSame(prevProps, [
+			'isFlexibleDate', 'flexibleDateRange', 'flexibleDateRanges'
+		])) {
+			updateState = true;
+			flexibleDateRange = !props.isFlexibleDate || !props.flexibleDateRange ||
+				!this.isArrayOfNumbers(props.flexibleDateRanges) ||
+				props.flexibleDateRanges.indexOf(props.flexibleDateRange) === -1 ?
+				0 : props.flexibleDateRange;
+			if (flexibleDateRange !== this.state.flexibleDateRange) {
+				this.flexibleDateRangeRef.current === flexibleDateRange;
+			}
+		}
 		if (updateState) {
 			this.setState({
 				startDate: startDate,
 				endDate: endDate,
-				shownMonth: shownMonth
+				shownMonth: shownMonth,
+				flexibleDateRange: flexibleDateRange
 			});
 		}
 	};
@@ -452,14 +499,13 @@ class DatePicker extends Component {
 
 	datePickerToggle = e => {
 		const isVisible = !this.state.isVisible;
-		this.setState({
-			isVisible: isVisible,
-			monthList: null
-		});
-		if (this.onToggle) {
-			this.onToggle(isVisible);
-		}
 		if (isVisible) {
+			this.flexibleSelectedDateRef.current = this.state.startDate;
+			this.flexibleDateRangeRef.current = this.state.flexibleDateRange;
+			this.setState({
+				isVisible: isVisible,
+				monthList: null
+			});
 			setTimeout(() => {
 				const element = document.querySelector('[data-id="date-picker-dialog"]');
 				if (element) this.trapFocus(element, (e) => {
@@ -470,6 +516,16 @@ class DatePicker extends Component {
 					}
 				});
 			});
+		} else {
+			this.setState({
+				isVisible: isVisible,
+				monthList: null,
+				flexibleDateRange: this.flexibleDateRangeRef.current,
+				startDate: this.isFlexibleDate ? this.flexibleSelectedDateRef.current : this.state.startDate
+			});
+		}
+		if (this.onToggle) {
+			this.onToggle(isVisible);
 		}
 	};
 
@@ -485,7 +541,8 @@ class DatePicker extends Component {
 			this.onSelect({
 				startDate: this.cloneDate(start),
 				endDate: this.cloneDate(end),
-				shownMonth: this.cloneDate(this.state.shownMonth)
+				shownMonth: this.cloneDate(this.state.shownMonth),
+				flexibleDateRange: this.state.flexibleDateRange
 			});
 		}
 		if (!isVisible && this.onToggle) {
@@ -493,21 +550,31 @@ class DatePicker extends Component {
 		}
 	};
 
+	setSelectionForFlexibleDate = (date) => {
+		this.setState({
+			startDate: date,
+			endDate: null,
+		});
+	};
+
 	inputClearClickHandler = e => {
 		if (this.state.startDate) {
 			e.stopPropagation();
 			const isVisible = this.state.isVisible;
+			this.flexibleSelectedDateRef.current = null;
 			this.setState({
 				startDate: null,
 				endDate: null,
 				isVisible: false,
-				monthList: null
+				monthList: null,
+				flexibleDateRange: this.flexibleDateRangeRef.current,
 			});
 			if (this.onSelect) {
 				this.onSelect({
 					startDate: null,
 					endDate: null,
-					shownMonth: this.cloneDate(this.state.shownMonth)
+					shownMonth: this.cloneDate(this.state.shownMonth),
+					flexibleDateRange: this.flexibleDateRangeRef.current
 				});
 			}
 			if (isVisible && this.onToggle) {
@@ -581,8 +648,22 @@ class DatePicker extends Component {
 		if (!Array.isArray(arr)) {
 			return false;
 		}
-		for (let i=0; i<num; i++) {
+		const length = num || arr.length;
+		for (let i=0; i<length; i++) {
 			if (typeof arr[i] !== 'string') {
+				return false;
+			}
+		}
+		return true;
+	};
+
+	isArrayOfNumbers = (arr, num) => {
+		if (!Array.isArray(arr)) {
+			return false;
+		}
+		const length = num || arr.length;
+		for (let i=0; i<length; i++) {
+			if (typeof arr[i] !== 'number') {
 				return false;
 			}
 		}
@@ -635,7 +716,11 @@ class DatePicker extends Component {
 			else {
 				startDate = date;
 			}
-			this.setSelection(startDate, endDate);
+			if (this.isFlexibleDate) {
+				this.setSelectionForFlexibleDate(startDate);
+			} else {
+				this.setSelection(startDate, endDate);
+			}
 		}
 	};
 
@@ -647,6 +732,11 @@ class DatePicker extends Component {
 			return date;
 		}
 	};
+
+	getFlexibleDateRangesLabels = (flexibleDateRangesLabels) => !this.isFlexibleDate ? [] :
+		this.isArrayOfStrings(flexibleDateRangesLabels, this.flexibleDateRanges.length) ?
+		flexibleDateRangesLabels.slice(0, this.flexibleDateRanges.length) :
+		this.flexibleDateRanges.map(range => '\u00B1 ' + range + 'day' + (range > 1 ? 's' : ''));
 
 	triggerClick = (e) => {
 		if (e.key === 'Enter' || e.key === ' ') {
@@ -678,11 +768,15 @@ class DatePicker extends Component {
 			const itrationDate = new Date(year, month, dayDate);
 			const inBlackList = this.inBlackList(itrationDate);
 			const startDateToItrationDate = this.state.startDate ? itrationDate - this.state.startDate : null;
+			const startDateToItrationDateInDays = startDateToItrationDate ?
+				Math.round(startDateToItrationDate / 86400000) : null
 			const endDateToItrationDate = this.state.endDate ? itrationDate - this.state.endDate : null;
 			const minDateToItrationDate = this.minDate ? itrationDate - this.minDate : null;
 			const maxDateToItrationDate = this.maxDate ? itrationDate - this.maxDate : null;
 			const dateHoveredToItrationDate = this.state.dateHovered ?
 				itrationDate - this.state.dateHovered : null;
+			const isInFlexibleDateRange = this.state.startDate && this.state.flexibleDateRange &&
+				Math.abs(startDateToItrationDateInDays) <= this.state.flexibleDateRange;
 			const classNames = this.CONSTANTS.CLASS_NAMES;
 			const itrationClassName1 = dayDate < 1 ? classNames.EMPTY :
 				(this.minDate && minDateToItrationDate < 0) || (this.maxDate && maxDateToItrationDate > 0) ?
@@ -708,18 +802,33 @@ class DatePicker extends Component {
 				dateHoveredToItrationDate > 0 || startDateToItrationDate < 0 ? null :
 				startDateToItrationDate === 0 ? classNames.HOVER_START :
 				dateHoveredToItrationDate === 0 ? classNames.HOVER_END : classNames.IN_HOVER;
+			let itrationClassName6 = !isInFlexibleDateRange ? null : classNames.IN_FLEXIBLE_RANGE + ' ' +
+				(startDateToItrationDateInDays > 0 ? classNames.IN_FLEXIBLE_RANGE_FROM_RIGHT + ' ' +
+				classNames.IN_FLEXIBLE_RANGE_FROM_RIGHT + '-' + startDateToItrationDateInDays :
+				startDateToItrationDateInDays < 0 ? classNames.IN_FLEXIBLE_RANGE_FROM_LEFT + ' ' +
+				classNames.IN_FLEXIBLE_RANGE_FROM_LEFT + '-' + (-startDateToItrationDateInDays) :
+				classNames.IN_FLEXIBLE_RANGE_CENTER);
+			if (
+				itrationClassName6 && itrationClassName1 === classNames.NORMAL &&
+				!this.isFirstDayInFlexibleRangeSet.current &&
+				itrationClassName6.indexOf(classNames.IN_FLEXIBLE_RANGE_FROM_LEFT) > -1
+			) {
+				this.isFirstDayInFlexibleRangeSet.current = true;
+				itrationClassName6 += ' ' + classNames.FIRST_IN_FLEXIBLE_RANGE;
+			}
 			const dayLabel = ('0' + dayDate).slice(-2);
-			days.push(<div
+			const dayElement = <div
 				key={`day_${monthKey}_${dayDate}_${i}`}
 				data-id={`grid-${dayLabel}`}
 				tabIndex="-1"
-				aria-disabled={!!itrationClassName1 && itrationClassName1.indexOf('day-disabled') !== -1}
+				aria-disabled={!!itrationClassName1 && itrationClassName1.indexOf(classNames.DISABLED) !== -1}
 				aria-selected={!!itrationClassName4 && itrationClassName4.indexOf('day-selection') !== -1}
 				className={classNames.DAY + ' ' + itrationClassName1 +
 					(itrationClassName2 ? ' ' + itrationClassName2 : '') +
 					(itrationClassName3 ? ' ' + itrationClassName3 : '') +
 					(itrationClassName4 ? ' ' + itrationClassName4 : '') +
-					(itrationClassName5 ? ' ' + itrationClassName5 : '')}
+					(itrationClassName5 ? ' ' + itrationClassName5 : '') +
+					(itrationClassName6 ? ' ' + itrationClassName6 : '')}
 				onClick={() => this.dayClickHandler(itrationDate, itrationClassName1)}
 				onMouseEnter={() => this.dayEnterHandler(itrationDate, itrationClassName1)}
 				onMouseLeave={this.dayLeaveHandler}
@@ -729,7 +838,14 @@ class DatePicker extends Component {
 				shownMonth: this.cloneDate(this.state.shownMonth),
 				currentDate: this.cloneDate(itrationDate),
 				dayDate: dayLabel
-			}) : dayLabel}</div>);
+			}) : dayLabel}</div>;
+			if (
+				itrationClassName6 && itrationClassName1 === classNames.NORMAL &&
+				itrationClassName6.indexOf(classNames.IN_FLEXIBLE_RANGE_FROM_RIGHT) > -1
+			) {
+				this.lastDayInFlexibleRange.current = dayElement;
+			}
+			days.push(dayElement);
 		}
 		return days;
 	};
@@ -739,6 +855,8 @@ class DatePicker extends Component {
 		const shownYear = this.state.shownMonth.getFullYear();
 		const shownMonth = this.state.shownMonth.getMonth();
 		const months = [];
+		this.isFirstDayInFlexibleRangeSet.current = false;
+		this.lastDayInFlexibleRange.current = null;
 		for (let i=0; i<this.monthsInDatePicker; i++) {
 			const monthDate = new Date(shownYear, shownMonth + i, 1);
 			const monthKey = this.dateToString(monthDate, 'yyyy_m')
@@ -760,13 +878,15 @@ class DatePicker extends Component {
 								onClick={e => this.monthTitleClickHandler(e, i)}
 								onKeyDown={this.triggerClick}
 							>
-								{monthLabel}
-								{this.monthTitleDropDownIconTemplate && this.monthTitleDropDownIconTemplate({
-									startDate: this.cloneDate(this.state.startDate),
-									endDate: this.cloneDate(this.state.endDate),
-									shownMonth: this.cloneDate(this.state.shownMonth),
-									open: this.state.monthList === i
-								})}
+								<Fragment key="month-label">{monthLabel}</Fragment>
+								<Fragment key="month-icon">
+									{this.monthTitleDropDownIconTemplate && this.monthTitleDropDownIconTemplate({
+										startDate: this.cloneDate(this.state.startDate),
+										endDate: this.cloneDate(this.state.endDate),
+										shownMonth: this.cloneDate(this.state.shownMonth),
+										open: this.state.monthList === i
+									})}
+								</Fragment>
 							</div>
 							{this.state.monthList === i && <ul
 								role="list"
@@ -837,6 +957,9 @@ class DatePicker extends Component {
 				);
 			}
 		}
+		if (this.lastDayInFlexibleRange.current) {
+			this.lastDayInFlexibleRange.current.props.className += ' ' + classNames.LAST_IN_FLEXIBLE_RANGE;
+		}
 		return months;
 	};
 
@@ -872,12 +995,14 @@ class DatePicker extends Component {
 		// Update props
 		const today = this.toBeginningOfDay(new Date());
 		const props = this.props;
-		Object.keys(this.props).forEach(key => {
+		Object.keys(props).forEach(key => {
 			switch (key) {
 				case 'inputPlaceholder':
 				case 'inputLabel':
 				case 'backButtonLabel':
 				case 'nextButtonLabel':
+				case 'flexibleDateTitle':
+				case 'flexibleDateSelectButtonLabel':
 					this[key] = typeof props[key] === 'string' ? props[key] : this[key];
 					break;
 				case 'weekEnds':
@@ -936,6 +1061,7 @@ class DatePicker extends Component {
 				case 'showTitleDropDown':
 				case 'showInputLabel':
 				case 'selectedDateCanBeOutOfAllowedRange':
+				case 'isFlexibleDate':
 					this[key] = !!props[key];
 					break;
 				case 'isRangePicker':
@@ -965,9 +1091,10 @@ class DatePicker extends Component {
 					this.maxDate = !this.isDate(_maxDate) || this[key] && _maxDate - this[key] < 0 ?
 						null : this.toBeginningOfDay(_maxDate);
 					this.maxMonth = this.maxDate ? this.toBeginningOfMonth(this.maxDate) : null;
+					break;
 			}
 		});
-		Object.keys(this.props).forEach(key => {
+		Object.keys(props).forEach(key => {
 			switch (key) {
 				case 'lastMonthInMonthsDropDown':
 					this[key] = this.isDate(props[key]) && props[key] - this.firstMonthInMonthsDropDown >= 0 ?
@@ -988,11 +1115,18 @@ class DatePicker extends Component {
 					this[key] = !this.isDate(props[key]) || this.minDate && props[key] - this.minDate < 0 ?
 						null : this.toBeginningOfDay(props[key]);
 					this.maxMonth = this[key] ? this.toBeginningOfMonth(this[key]) : null;
+					break;
+				case 'flexibleDateRanges':
+					this[key] = !this.isFlexibleDate || !this.isArrayOfNumbers(props[key]) ? [] : props[key];
+					this.flexibleDateRangesLabels = this.getFlexibleDateRangesLabels(props.flexibleDateRangesLabels);
+					break;
 			}
 		});
-		Object.keys(this.props).forEach(key => {
+		Object.keys(props).forEach(key => {
 			if (key.indexOf('aria-') !== -1) {
-				this[key] = this.props[key];
+				this[key] = props[key];
+			} else if (key === 'flexibleDateRangesLabels') {
+				this[key] = this.getFlexibleDateRangesLabels(props[key]);
 			}
 		})
 
@@ -1081,6 +1215,29 @@ class DatePicker extends Component {
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
 				</div>
+				{this.isFlexibleDate && <div className={classNames.FLEXIBLE_DATE_CONTAINER}>
+					<div className={classNames.FLEXIBLE_DATE_TITLE_CONTAINER}>{this.flexibleDateTitle}</div>
+					<div className={classNames.FLEXIBLE_DATE_BUTTONS_CONTAINER}>
+						{this.flexibleDateRanges.map((range, index) => <button
+							key={'flexible-button-' + index + '-' + range}
+							className={classNames.FLEXIBLE_DATE_BUTTON + (
+								this.state.flexibleDateRange === range ?
+								' ' + classNames.FLEXIBLE_DATE_BUTTON_SELECTED : ''
+							)}
+							onClick={() => this.setState({
+								flexibleDateRange: this.state.flexibleDateRange === range ? 0 : range
+							})}
+						>{this.flexibleDateRangesLabels[index]}</button>)}
+					</div>
+					<button
+						className={classNames.FLEXIBLE_DATE_SAVE_BUTTON}
+						onClick={() => {
+							this.flexibleDateRangeRef.current = this.state.flexibleDateRange;
+							this.flexibleSelectedDateRef.current = this.state.startDate;
+							this.setSelection(this.state.startDate, null);
+						}}
+					>{this.flexibleDateSelectButtonLabel}</button>
+				</div>}
 				{this.footerTemplate && <div className={classNames.FOOTER_CONTAINER}>
 					{this.footerTemplate({
 						startDate: this.cloneDate(this.state.startDate),
@@ -1109,19 +1266,25 @@ DatePicker.propTypes = {
 	showTitleDropDown: PropTypes.bool,
 	showInputLabel: PropTypes.bool,
 	selectedDateCanBeOutOfAllowedRange: PropTypes.bool,
+	isFlexibleDate: PropTypes.bool,
 	monthsInDatePicker: PropTypes.number,
 	monthStep: PropTypes.number,
 	selectedDaysInOneClick: PropTypes.number,
 	firstDayInWeekShift: PropTypes.number,
 	dayNameLength: PropTypes.number,
+	flexibleDateRange: PropTypes.number,
+	flexibleDateRanges: PropTypes.arrayOf(PropTypes.number),
+	flexibleDateRangesLabels: PropTypes.arrayOf(PropTypes.string),
 	weekEnds: PropTypes.arrayOf(PropTypes.number),
 	inputDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	headerDateFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	datePickerRangeFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+	flexibleDateTitle: PropTypes.string,
 	inputPlaceholder: PropTypes.string,
 	inputLabel: PropTypes.string,
 	nextButtonLabel: PropTypes.string,
 	backButtonLabel: PropTypes.string,
+	flexibleDateSelectButtonLabel: PropTypes.string,
 	dayNames: PropTypes.arrayOf(PropTypes.string),
 	monthNames: PropTypes.arrayOf(PropTypes.string),
 	minDate: PropTypes.instanceOf(Date),
