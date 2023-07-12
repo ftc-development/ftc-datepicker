@@ -1219,6 +1219,7 @@ class DatePicker extends Component {
 					<div className={classNames.FLEXIBLE_DATE_TITLE_CONTAINER}>{this.flexibleDateTitle}</div>
 					<div className={classNames.FLEXIBLE_DATE_BUTTONS_CONTAINER}>
 						{this.flexibleDateRanges.map((range, index) => <button
+							type="button"
 							key={'flexible-button-' + index + '-' + range}
 							className={classNames.FLEXIBLE_DATE_BUTTON + (
 								this.state.flexibleDateRange === range ?
@@ -1230,6 +1231,7 @@ class DatePicker extends Component {
 						>{this.flexibleDateRangesLabels[index]}</button>)}
 					</div>
 					<button
+						type="button"
 						className={classNames.FLEXIBLE_DATE_SAVE_BUTTON}
 						onClick={() => {
 							this.flexibleDateRangeRef.current = this.state.flexibleDateRange;
