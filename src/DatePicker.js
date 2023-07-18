@@ -48,10 +48,14 @@ class DatePicker extends Component {
 				DATE_PICKER_RANGE_DETAILS: 'date-picker-range-details',
 				FOOTER_CONTAINER: 'footer-container',
 				FLEXIBLE_DATE_CONTAINER: 'flexible-date-container',
+				FLEXIBLE_DATE_CONTAINER_DISABLED: 'flexible-date-container-disabled',
 				FLEXIBLE_DATE_TITLE_CONTAINER: 'flexible-date-title-container',
+				FLEXIBLE_DATE_TITLE_CONTAINER_DISABLED: 'flexible-date-title-container-disabled',
 				FLEXIBLE_DATE_BUTTONS_CONTAINER: 'flexible-date-buttons-container',
+				FLEXIBLE_DATE_BUTTONS_CONTAINER_DISABLED: 'flexible-date-buttons-container-disabled',
 				FLEXIBLE_DATE_BUTTON: 'flexible-date-button',
 				FLEXIBLE_DATE_BUTTON_SELECTED: 'flexible-date-button-selected',
+				FLEXIBLE_DATE_BUTTON_DISABLED: 'flexible-date-button-disabled',
 				FLEXIBLE_DATE_SAVE_BUTTON: 'flexible-date-save-button',
 				BTN_PREVIOUS: 'btn-previous',
 				BTN_NEXT: 'btn-next',
@@ -141,6 +145,7 @@ class DatePicker extends Component {
 		this.onSelect = null;
 		this.onToggle = null;
 		this.onMonthChange = null;
+		this.inputDateTemplate = null;
 		this.inputClearButtonTemplate = null;
 		this.footerTemplate = null;
 		this.previousButtonTemplate = null;
@@ -276,7 +281,7 @@ class DatePicker extends Component {
 				props.flexibleDateRanges.indexOf(props.flexibleDateRange) === -1 ?
 				0 : props.flexibleDateRange;
 			if (flexibleDateRange !== this.state.flexibleDateRange) {
-				this.flexibleDateRangeRef.current === flexibleDateRange;
+				this.flexibleDateRangeRef.current = flexibleDateRange;
 			}
 		}
 		if (updateState) {
@@ -1047,6 +1052,7 @@ class DatePicker extends Component {
 				case 'onSelect':
 				case 'onToggle':
 				case 'onMonthChange':
+				case 'inputDateTemplate':
 				case 'inputClearButtonTemplate':
 				case 'footerTemplate':
 				case 'previousButtonTemplate':
@@ -1134,8 +1140,8 @@ class DatePicker extends Component {
 		const disablePreviousBTN = this.minMonth && this.state.shownMonth - this.minMonth <= 0;
 		const disableNextBTN = this.maxMonth && new Date(this.state.shownMonth.getFullYear(),
 			this.state.shownMonth.getMonth() + this.monthsInDatePicker - 1, 1) - this.maxMonth >= 0;
-		const selectedStart = this.state.startDate;
-		const selectedEnd = this.isRangePicker ? this.state.endDate :
+		const selectedStart = this.isFlexibleDate ? this.flexibleSelectedDateRef.current : this.state.startDate;
+		const selectedEnd = this.isFlexibleDate ? null : this.isRangePicker ? this.state.endDate :
 			selectedStart && this.selectedDaysInOneClick > 1 ? new Date(
 				selectedStart.getFullYear(), selectedStart.getMonth(), selectedStart.getDate() + this.selectedDaysInOneClick - 1
 			) : null;
@@ -1158,15 +1164,33 @@ class DatePicker extends Component {
 			>
 				{this.showInputLabel && <div className={classNames.DATE_PICKER_INPUT_LABEL}>{this.inputLabel}</div>}
 				<div className={classNames.DATE_PICKER_INPUT_PLACEHOLDER}>
-					{!selectedStart ? this.inputPlaceholder : this.createDateString(
-						this.inputDateFormat, selectedStart, selectedEnd
-					)}
-					{this.inputPlaceholderIconTemplate && this.inputPlaceholderIconTemplate({
-						isOpen: this.state.isVisible,
-						startDate: this.cloneDate(this.state.startDate),
-						endDate: this.cloneDate(this.state.endDate),
-						shownMonth: this.cloneDate(this.state.shownMonth)
-					})}
+					<Fragment key="input-text">{
+						!selectedStart ? <Fragment key="input-placeholder-text">{this.inputPlaceholder}</Fragment> :
+						!!this.inputDateTemplate ? <Fragment key="input-date-template-text">
+							{this.inputDateTemplate({
+								startDate: this.cloneDate(selectedStart),
+								endDate: this.cloneDate(selectedEnd),
+								shownMonth: this.cloneDate(this.state.shownMonth),
+								flexibleDateRange: this.flexibleDateRangeRef.current
+							})}
+						</Fragment> : <Fragment key="input-format-text">
+							<Fragment key="input-date-format-text">
+								{this.createDateString(this.inputDateFormat, selectedStart, selectedEnd)}
+							</Fragment>
+							<Fragment key="input-range-format-text">
+								{!!this.flexibleDateRangeRef.current && (' (\u00B1' + this.flexibleDateRangeRef.current + ')')}
+							</Fragment>
+						</Fragment>
+					}</Fragment>
+					<Fragment key="input-icon">
+						{this.inputPlaceholderIconTemplate && this.inputPlaceholderIconTemplate({
+							isOpen: this.state.isVisible,
+							startDate: this.cloneDate(selectedStart),
+							endDate: this.cloneDate(selectedEnd),
+							shownMonth: this.cloneDate(this.state.shownMonth),
+							flexibleDateRange: this.flexibleDateRangeRef.current
+						})}
+					</Fragment>
 				</div>
 				{this.inputClearButtonTemplate && <div
 					className={classNames.INPUT_BUTTON}
@@ -1215,19 +1239,27 @@ class DatePicker extends Component {
 				<div className={classNames.MONTHS_CONTAINER}>
 					{this.createMonths(today)}
 				</div>
-				{this.isFlexibleDate && <div className={classNames.FLEXIBLE_DATE_CONTAINER}>
-					<div className={classNames.FLEXIBLE_DATE_TITLE_CONTAINER}>{this.flexibleDateTitle}</div>
-					<div className={classNames.FLEXIBLE_DATE_BUTTONS_CONTAINER}>
+				{this.isFlexibleDate && <div className={
+					classNames.FLEXIBLE_DATE_CONTAINER + (this.state.startDate ? '' :
+					' ' + classNames.FLEXIBLE_DATE_CONTAINER_DISABLED)
+				}>
+					<div className={classNames.FLEXIBLE_DATE_TITLE_CONTAINER + (
+						this.state.startDate ? '' : ' ' + classNames.FLEXIBLE_DATE_TITLE_CONTAINER_DISABLED
+					)}>{this.flexibleDateTitle}</div>
+					<div className={classNames.FLEXIBLE_DATE_BUTTONS_CONTAINER + (
+						this.state.startDate ? '' : ' ' + classNames.FLEXIBLE_DATE_BUTTONS_CONTAINER_DISABLED
+					)}>
 						{this.flexibleDateRanges.map((range, index) => <button
 							type="button"
 							key={'flexible-button-' + index + '-' + range}
 							className={classNames.FLEXIBLE_DATE_BUTTON + (
 								this.state.flexibleDateRange === range ?
 								' ' + classNames.FLEXIBLE_DATE_BUTTON_SELECTED : ''
-							)}
+							) + (this.state.startDate ? '' : ' ' + classNames.FLEXIBLE_DATE_BUTTON_DISABLED)}
 							onClick={() => this.setState({
 								flexibleDateRange: this.state.flexibleDateRange === range ? 0 : range
 							})}
+							disabled={!this.state.startDate}
 						>{this.flexibleDateRangesLabels[index]}</button>)}
 					</div>
 					<button
@@ -1303,6 +1335,7 @@ DatePicker.propTypes = {
 			end: PropTypes.instanceOf(Date)
 		})
 	])),
+	inputDateTemplate: PropTypes.func,
 	inputClearButtonTemplate: PropTypes.func,
 	footerTemplate: PropTypes.func,
 	previousButtonTemplate: PropTypes.func,
