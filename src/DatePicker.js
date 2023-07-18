@@ -708,23 +708,29 @@ class DatePicker extends Component {
 	};
 
 	inputClearClickHandler = (e) => {
-		if (this.state.startDate) {
+		if (
+			(this.isFlexibleDate &&
+				(this.flexibleSelectedDateRef.current ||
+					this.flexibleDateRangeRef.current)) ||
+			(!this.isFlexibleDate && this.state.startDate)
+		) {
 			e.stopPropagation();
 			const isVisible = this.state.isVisible;
 			this.flexibleSelectedDateRef.current = null;
+			this.flexibleDateRangeRef.current = 0;
 			this.setState({
 				startDate: null,
 				endDate: null,
 				isVisible: false,
 				monthList: null,
-				flexibleDateRange: this.flexibleDateRangeRef.current,
+				flexibleDateRange: 0,
 			});
 			if (this.onSelect) {
 				this.onSelect({
 					startDate: null,
 					endDate: null,
 					shownMonth: this.cloneDate(this.state.shownMonth),
-					flexibleDateRange: this.flexibleDateRangeRef.current,
+					flexibleDateRange: 0,
 				});
 			}
 			if (isVisible && this.onToggle) {
@@ -733,7 +739,7 @@ class DatePicker extends Component {
 		}
 	};
 
-	datePickerClickHandler = (e) => {
+	datePickerClickHandler = () => {
 		this.setState({
 			monthList: null,
 		});
