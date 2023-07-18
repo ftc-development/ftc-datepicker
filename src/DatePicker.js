@@ -174,7 +174,7 @@ class DatePicker extends Component {
 		this.onSelect = null;
 		this.onToggle = null;
 		this.onMonthChange = null;
-		this.inputDateTemplate = null;
+		this.inputTemplate = null;
 		this.inputClearButtonTemplate = null;
 		this.footerTemplate = null;
 		this.previousButtonTemplate = null;
@@ -1438,7 +1438,7 @@ class DatePicker extends Component {
 				case 'onSelect':
 				case 'onToggle':
 				case 'onMonthChange':
-				case 'inputDateTemplate':
+				case 'inputTemplate':
 				case 'inputClearButtonTemplate':
 				case 'footerTemplate':
 				case 'previousButtonTemplate':
@@ -1661,9 +1661,9 @@ class DatePicker extends Component {
 									<Fragment key="input-placeholder-text">
 										{this.inputPlaceholder}
 									</Fragment>
-								) : !!this.inputDateTemplate ? (
-									<Fragment key="input-date-template-text">
-										{this.inputDateTemplate({
+								) : !!this.inputTemplate ? (
+									<Fragment key="input-template-text">
+										{this.inputTemplate({
 											startDate:
 												this.cloneDate(selectedStart),
 											endDate:
@@ -1996,7 +1996,7 @@ DatePicker.propTypes = {
 			}),
 		])
 	),
-	inputDateTemplate: PropTypes.func,
+	inputTemplate: PropTypes.func,
 	inputClearButtonTemplate: PropTypes.func,
 	footerTemplate: PropTypes.func,
 	previousButtonTemplate: PropTypes.func,
