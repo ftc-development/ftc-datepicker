@@ -61,6 +61,9 @@ class DatePicker extends Component {
 				DATE_PICKER_INPUT_LABEL: 'date-picker-input-label',
 				DATE_PICKER_INPUT_PLACEHOLDER: 'date-picker-input-placeholder',
 				INPUT_BUTTON: 'input-button',
+				INPUT_BUTTON_DISABLED: 'input-button-disabled',
+				INPUT_BUTTON_NO_DEATE: 'input-button-no-date',
+				INPUT_BUTTON_NO_RANGE: 'input-button-no-range',
 				DATE_PICKER: 'date-picker',
 				MONTHS_CONTAINER: 'months-container',
 				DATE_PICKER_RANGE_DETAILS: 'date-picker-range-details',
@@ -1635,6 +1638,11 @@ class DatePicker extends Component {
 				: {}),
 		};
 
+		const noDate =
+			(this.isFlexibleDate && !this.flexibleSelectedDateRef.current) ||
+			(!this.isFlexibleDate && !this.state.startDate);
+		const noRange =
+			this.isFlexibleDate && !this.flexibleDateRangeRef.current;
 		return (
 			<div
 				className={classNames.DATE_PICKER_CONTAINER}
@@ -1719,17 +1727,36 @@ class DatePicker extends Component {
 						</div>
 						{this.inputClearButtonTemplate && (
 							<div
-								className={classNames.INPUT_BUTTON}
+								className={
+									classNames.INPUT_BUTTON +
+									(noDate
+										? ' ' + classNames.INPUT_BUTTON_NO_DEATE
+										: '') +
+									(noRange
+										? ' ' + classNames.INPUT_BUTTON_NO_RANGE
+										: '') +
+									(noDate && noRange
+										? ' ' + classNames.INPUT_BUTTON_DISABLED
+										: '')
+								}
 								onClick={this.inputClearClickHandler}
 							>
 								{this.inputClearButtonTemplate({
 									startDate: this.cloneDate(
-										this.state.startDate
+										this.isFlexibleDate
+											? this.flexibleSelectedDateRef
+													.current
+											: this.state.startDate
 									),
-									endDate: this.cloneDate(this.state.endDate),
+									endDate: this.isFlexibleDate
+										? null
+										: this.cloneDate(this.state.endDate),
 									shownMonth: this.cloneDate(
 										this.state.shownMonth
 									),
+									flexibleDateRange: this.isFlexibleDate
+										? this.flexibleDateRangeRef.current
+										: 0,
 								})}
 							</div>
 						)}
